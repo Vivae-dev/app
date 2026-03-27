@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "node dist/catalogo.js & node dist/reserva.js",
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/catalogo.ts\" \"ts-node-dev --respawn --transpile-only src/reserva.ts\"",
     "build": "tsc"
   },
   "keywords": [],
@@ -20,6 +20,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
+    "concurrently": "^9.2.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
