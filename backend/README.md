@@ -1,27 +1,46 @@
-# Vivae - Backend
+# Vivae - Backend (Monorepo de Microsserviços)
 
-Esta pasta contém o código da API backend para o Vivae. Construído com Node.js, Express e TypeScript.
+Este repositório contém os microsserviços corporativos do Vivae utilizando Domain-Driven Design (Avançado) sob o framework Express, TypeScript e ferramentas concorrentes.
 
-## Scripts Disponíveis
+## Estrutura de Microsserviços
 
-### `npm install`
+Para organizar e isolar cada contexto do sistema, os microsserviços ficam isolados dentro de `src/`.
 
-Instala todas as dependências.
+- **Catálogo (`src/catalogo/`)**: 1º Microsserviço de gerenciamento do CRUD de Caixas de Assinatura e Caixas Antigas (na porta 8001).
+- **Reservas (`src/reserva.ts`)**: Microsserviço provisório para simular a tomada de reservas na porta 3002.
 
-### `npm run dev`
+_(Novos microsserviços como Auth, Payment e EventBus serão incorporados nesta estrutura corporativa em breve)_.
 
-Roda o app em modo de desenvolvimento usando `ts-node-dev`.
-O servidor irá reiniciar se você fizer edições em `src/index.ts`.
-Por padrão, a API estará disponível em [http://localhost:3001](http://localhost:3001).
+## Configuração de Ambiente
 
-### `npm run build`
+Antes de rodar, é necessário apontar em qual porta cada microsserviço operará e qual será a rota de comunicação (CORS) com o Frontend.
 
-Compila o código TypeScript para a pasta `dist`.
+Copie o `.env.example` renomeando para `.env`:
 
-### `npm start`
+```bash
+cp .env.example .env
+```
 
-Inicia a aplicação Node.js compilada a partir da pasta `dist`.
+## Como Rodar Localmente (Via Terminal Único)
 
-## Endpoints
+Instale as dependências pela primeira vez:
 
-- `GET /api/health`: Retorna um status simples de verificação de integridade.
+```bash
+npm install
+```
+
+Este projeto utiliza a biblioteca `concurrently` para processar e compilar as portas de múltiplos microsserviços independentes usando apenas um único comando. No seu terminal, rode o comando abaixo:
+
+```bash
+npm run dev
+```
+
+Esse comando irá levantar o Catálogo (porta 8001) e as Reservas (porta 3002) simultaneamente.
+
+## Gerar a Build Final (TypeScript -> JavaScript)
+
+```bash
+npm run build
+```
+
+Todos os microsserviços serão compilados e minificados para a pasta `dist/` do sistema.

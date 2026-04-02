@@ -1,19 +1,34 @@
-# Vivae - Frontend
+# Vivae - Frontend (React + Vite)
 
-Esta é a aplicação frontend para o Vivae, construída usando React, TypeScript e Vite.
+Este é o aplicativo React do Vivae, construído com foco em uma UI moderna e premium (Glassmorphism), conectando-se na nossa arquitetura de microsserviços do backend.
 
-## Scripts Disponíveis
+## Configuração do Workspace
 
-### `npm install`
+1. Como este projeto consome os microsserviços do Backend, é necessário definir o caminho de cada um nas variáveis de ambiente.
+2. Copie o arquivo `.env.example` criando um novo `.env`:
 
-Instala todas as dependências.
+```bash
+cp .env.example .env
+```
 
-### `npm run dev`
+3. O frontend automaticamente usará a porta 5173 restrita (`http://localhost:5173`).
 
-Roda o app em modo de desenvolvimento.
-Abra a URL local fornecida no terminal (geralmente [http://localhost:5173](http://localhost:5173)) para visualizar no navegador.
-A página irá recarregar se você fizer edições. Você também verá erros no console.
+## Como rodar o projeto
 
-### `npm run build`
+Instale as dependências uma vez:
 
-Gera o build da aplicação para produção na pasta `dist`.
+```bash
+npm install
+```
+
+Inicie o servidor de desenvolvimento:
+
+```bash
+npm run dev
+```
+
+## Como compilar para Produção
+
+```bash
+npm run build
+```
