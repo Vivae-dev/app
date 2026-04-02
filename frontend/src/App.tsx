@@ -23,7 +23,7 @@ function App() {
 	const [toasts, setToasts] = useState<Toast[]>([]);
 
 	const catalogUrl =
-		import.meta.env.VITE_CATALOGO_URI || 'http://localhost:3001';
+		import.meta.env.VITE_CATALOGO_URI || 'http://localhost:8001';
 	const reservaUrl =
 		import.meta.env.VITE_RESERVA_URI || 'http://localhost:3002';
 
