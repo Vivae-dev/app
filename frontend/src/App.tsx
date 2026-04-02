@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
-interface Experience {
+interface Box {
 	id: number;
 	name: string;
+	description: string;
+	type: 'ASSINATURA' | 'AVULSA';
 	price: number;
 	image: string;
+	stock: number;
 }
 
 interface Toast {
@@ -15,7 +18,7 @@ interface Toast {
 }
 
 function App() {
-	const [experiences, setExperiences] = useState<Experience[]>([]);
+	const [boxes, setBoxes] = useState<Box[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -26,30 +29,30 @@ function App() {
 
 	useEffect(() => {
 		axios
-			.get(`${catalogUrl}/api/produtos`)
+			.get(`${catalogUrl}/api/caixas`)
 			.then((response) => {
-				setExperiences(response.data);
+				setBoxes(response.data);
 				setTimeout(() => setLoading(false), 800);
 			})
 			.catch((error) => {
-				console.error('Erro ao buscar experiências:', error);
+				console.error('Erro ao buscar caixas:', error);
 				setLoading(false);
 			});
 	}, [catalogUrl]);
 
-	const handleBook = async (exp: Experience) => {
+	const handleBook = async (box: Box) => {
 		try {
 			const res = await axios.post(`${reservaUrl}/api/reservas`, {
-				experienceId: exp.id,
-				experienceName: exp.name,
-				price: exp.price,
+				experienceId: box.id,
+				experienceName: box.name,
+				price: box.price,
 			});
 			console.log('Reserva feita:', res.data);
 
 			const id = Date.now();
 			setToasts((prev) => [
 				...prev,
-				{ id, message: `✨ ${exp.name} reservado com sucesso!` },
+				{ id, message: `✨ ${box.name} reservado com sucesso!` },
 			]);
 
 			setTimeout(() => {
@@ -60,7 +63,7 @@ function App() {
 			const id = Date.now();
 			setToasts((prev) => [
 				...prev,
-				{ id, message: `❌ Erro ao reservar ${exp.name}` },
+				{ id, message: `❌ Erro ao reservar ${box.name}` },
 			]);
 			setTimeout(() => {
 				setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -78,7 +81,7 @@ function App() {
 			</header>
 
 			<main className="main-content">
-				<h2>Nossas Experiências</h2>
+				<h2>Nossas Caixas Mensais e Avulsas</h2>
 
 				{loading ? (
 					<div className="product-grid">
@@ -88,26 +91,44 @@ function App() {
 					</div>
 				) : (
 					<div className="product-grid">
-						{experiences.map((exp) => (
-							<div key={exp.id} className="product-card">
+						{boxes.map((box) => (
+							<div key={box.id} className="product-card">
 								<div className="product-image">
-									<img 
-										src={exp.image} 
-										alt={exp.name} 
-										onError={(e) => {
-											(e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Vivae+Experiência';
-										}}
-									/>
+									<img src={box.image} alt={box.name} />
 								</div>
-								<h3>{exp.name}</h3>
+								<h3>{box.name}</h3>
+								<p
+									style={{
+										fontSize: '0.9rem',
+										color: '#94a3b8',
+										marginBottom: '1rem',
+									}}
+								>
+									{box.type === 'ASSINATURA' ? '📦 Assinatura' : '🛍️ Avulsa'} -{' '}
+									{box.description}
+								</p>
 								<p className="price">
 									{new Intl.NumberFormat('pt-BR', {
 										style: 'currency',
 										currency: 'BRL',
-									}).format(exp.price)}
+									}).format(box.price)}
+									{box.type === 'ASSINATURA' && (
+										<span
+											style={{
+												fontSize: '1rem',
+												fontWeight: 'normal',
+												color: '#94a3b8',
+												marginLeft: '4px',
+											}}
+										>
+											/ mês
+										</span>
+									)}
 								</p>
-								<button className="buy-button" onClick={() => handleBook(exp)}>
-									Reservar Agora
+								<button className="buy-button" onClick={() => handleBook(box)}>
+									{box.type === 'ASSINATURA'
+										? 'Assinar Agora'
+										: 'Comprar Avulsa'}
 								</button>
 							</div>
 						))}
