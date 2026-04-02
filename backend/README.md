@@ -44,3 +44,9 @@ npm run build
 ```
 
 Todos os microsserviços serão compilados e minificados para a pasta `dist/` do sistema.
+
+## Banco de Dados
+
+O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
+
+![alt text](image.png)
