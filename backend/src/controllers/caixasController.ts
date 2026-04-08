@@ -21,7 +21,7 @@ let boxes: Box[] = [
 		type: 'AVULSA',
 		price: 110.0,
 		image:
-			'https://plus.unsplash.com/premium_photo-1678382344509-ed0ff45be16b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+			'https://images.unsplash.com/photo-1590605105526-5c08f63f89aa?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
 		stock: 15,
 	},
 	{
@@ -32,11 +32,10 @@ let boxes: Box[] = [
 		type: 'AVULSA',
 		price: 95.5,
 		image:
-			'https://images.unsplash.com/photo-1590605105526-5c08f63f89aa?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+			'https://plus.unsplash.com/premium_photo-1678382344509-ed0ff45be16b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
 		stock: 5,
 	},
 ];
-
 
 export const CaixasController = {
 	getAll(req: Request, res: Response) {
