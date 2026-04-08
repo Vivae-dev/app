@@ -239,7 +239,7 @@ body {
 	position: fixed;
 	bottom: 2rem;
 	right: 2rem;
-	z-index: 100;
+	z-index: 9999;
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
@@ -303,4 +303,139 @@ body {
 	100% {
 		opacity: 0.5;
 	}
+}
+
+/* Auth Menu & Modal */
+.auth-menu {
+	position: absolute;
+	top: 2rem;
+	right: 2rem;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.auth-button {
+	background: rgba(139, 92, 246, 0.2);
+	color: #f8fafc;
+	border: 1px solid var(--accent);
+	padding: 0.5rem 1.5rem;
+	border-radius: 20px;
+	cursor: pointer;
+	font-weight: 600;
+	transition: all 0.3s;
+}
+
+.auth-button:hover {
+	background: var(--accent);
+}
+
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, 0.6);
+	backdrop-filter: blur(8px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background: var(--card-bg);
+	border: 1px solid var(--card-border);
+	padding: 2.5rem;
+	border-radius: 24px;
+	width: 100%;
+	max-width: 400px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+	position: relative;
+}
+
+.modal-close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	background: transparent;
+	border: none;
+	color: var(--text-secondary);
+	font-size: 1.5rem;
+	cursor: pointer;
+}
+
+.modal-close:hover {
+	color: var(--text-primary);
+}
+
+.auth-tabs {
+	display: flex;
+	margin-bottom: 2rem;
+	border-bottom: 1px solid var(--card-border);
+}
+
+.auth-tab {
+	flex: 1;
+	background: transparent;
+	border: none;
+	padding: 1rem;
+	color: var(--text-secondary);
+	font-weight: 600;
+	font-size: 1.1rem;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+	color: var(--accent);
+	border-bottom-color: var(--accent);
+}
+
+.form-group {
+	margin-bottom: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	text-align: left;
+}
+
+.form-group label {
+	margin-bottom: 0.5rem;
+	font-size: 0.9rem;
+	color: var(--text-secondary);
+}
+
+.form-group input {
+	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid var(--card-border);
+	padding: 0.75rem 1rem;
+	border-radius: 8px;
+	color: white;
+	font-size: 1rem;
+	outline: none;
+	transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+	border-color: var(--accent);
+}
+
+.submit-button {
+	width: 100%;
+	background: linear-gradient(135deg, #8b5cf6, #ec4899);
+	color: white;
+	border: none;
+	padding: 1rem;
+	border-radius: 12px;
+	font-weight: 700;
+	font-size: 1.1rem;
+	cursor: pointer;
+	transition: transform 0.2s, box-shadow 0.2s;
+	margin-top: 1rem;
+}
+
+.submit-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 20px rgba(139, 92, 246, 0.4);
 }
