@@ -5,11 +5,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-const port = 3002;
+const port = parseInt(process.env.RESERVA_PORT || '8003', 10);
 
 app.use(
 	cors({
-		origin: process.env.FRONT_URL || 'http://localhost:5173',
+		origin: process.env.FRONT_URL || 'http://localhost:8000',
 	}),
 );
 app.use(express.json());

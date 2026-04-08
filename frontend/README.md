@@ -11,7 +11,7 @@ Este é o aplicativo React do Vivae, construído com foco em uma UI moderna e pr
 cp .env.example .env
 ```
 
-3. O frontend automaticamente usará a porta 5173 restrita (`http://localhost:5173`).
+3. O frontend automaticamente usará a porta 8000 restrita (`http://localhost:8000`).
 
 ## Como rodar o projeto
 

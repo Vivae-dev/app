@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/catalogo.js & node dist/reserva.js",
-    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/catalogo.ts\" \"ts-node-dev --respawn --transpile-only src/reserva.ts\"",
+    "start": "node dist/catalogo.js & node dist/reserva.js & node dist/auth.js",
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/catalogo.ts\" \"ts-node-dev --respawn --transpile-only src/reserva.ts\" \"ts-node-dev --respawn --transpile-only src/auth.ts\"",
     "build": "tsc"
   },
   "keywords": [],

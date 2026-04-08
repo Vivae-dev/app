@@ -35,4 +35,4 @@ npm install
 npm run dev
 ```
 
-O frontend do Vivae estará disponível em [http://localhost:5173](http://localhost:5173)
+O frontend do Vivae estará disponível em [http://localhost:8000](http://localhost:8000)

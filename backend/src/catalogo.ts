@@ -11,7 +11,7 @@ const host = process.env.HOST || 'localhost';
 
 app.use(
 	cors({
-		origin: process.env.FRONT_URL || 'http://localhost:5173',
+		origin: process.env.FRONT_URL || 'http://localhost:8000',
 	}),
 );
 app.use(express.json());
