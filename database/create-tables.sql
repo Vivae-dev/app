@@ -36,4 +36,7 @@ CREATE TABLE IF NOT EXISTS composicao_produtos(
     FOREIGN KEY (id_material) REFERENCES materiais(id_material)
 );
 
+ALTER TABLE usuarios ADD endereco VARCHAR(200);
+ALTER TABLE usuarios DROP COLUMN username;
 
+ALTER TABLE usuarios ADD data_criacao TIMESTAMP;
