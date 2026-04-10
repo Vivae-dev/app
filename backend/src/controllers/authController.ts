@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
+import bcrypt from 'bcryptjs';
 
 let users: User[] = [];
 let nextId = 1;
 
 export const AuthController = {
-	register(req: Request, res: Response) {
+	register: async (req: Request, res: Response) => {
 		const { name, email, password, address } = req.body;
 
 		if (!name || !email || !password) {
@@ -19,11 +20,13 @@ export const AuthController = {
 			return res.status(409).json({ message: 'Este e-mail já está em uso.' });
 		}
 
+		const hashedPassword = await bcrypt.hash(password, 10);
+
 		const newUser: User = {
 			id: nextId++,
 			name,
 			email,
-			password, // TODO: usar hash
+			password: hashedPassword,
 			address,
 			createdAt: new Date(),
 		};
@@ -37,7 +40,7 @@ export const AuthController = {
 		res.status(201).json(userWithoutPassword);
 	},
 
-	login(req: Request, res: Response) {
+	login: async (req: Request, res: Response) => {
 		const { email, password } = req.body;
 
 		if (!email || !password) {
@@ -46,11 +49,15 @@ export const AuthController = {
 				.json({ message: 'E-mail e senha são obrigatórios.' });
 		}
 
-		const user = users.find(
-			(u) => u.email === email && u.password === password,
-		);
+		const user = users.find((u) => u.email === email);
 
 		if (!user) {
+			return res.status(401).json({ message: 'Credenciais inválidas.' });
+		}
+		
+		const passwordMatch = await bcrypt.compare(password, user.password);
+		
+		if (!passwordMatch) {
 			return res.status(401).json({ message: 'Credenciais inválidas.' });
 		}
 
