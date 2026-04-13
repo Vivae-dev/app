@@ -23,7 +23,6 @@ export const AuthController = {
 		const hashedPassword = await bcrypt.hash(password, 10);
 
 		const newUser: User = {
-			id: nextId++,
 			name,
 			email,
 			password: hashedPassword,
@@ -31,9 +30,11 @@ export const AuthController = {
 			createdAt: new Date(),
 		};
 
+
 		users.push(newUser);
 		console.log(users);
 
+		enviarDados(newUser);
 		// Remover a senha antes de retornar os dados
 		const { password: _, ...userWithoutPassword } = newUser;
 
@@ -68,3 +69,22 @@ export const AuthController = {
 		res.json(userWithoutPassword);
 	},
 };
+
+async function enviarDados(usuario : User) {
+
+	try{
+		const response = await fetch("http://localhost:3000/cadastro", {
+		method: "POST",
+		headers: {
+		"Content-Type": "application/json"
+		},
+		body: JSON.stringify(usuario)
+		});
+
+		const resultado = await response.json();
+		console.log(resultado);
+	} catch (err) {
+		console.log(err);
+	}
+
+}
