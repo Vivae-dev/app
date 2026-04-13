@@ -26,23 +26,24 @@ const conectar = async () => {
 }
 conectar()
 
-// CREATE
+// inserir usuário
 app.post('/cadastro', async (req, res) => {
     try {
-        const {senha_hash, email, nome_completo, endereco} = req.body
+        const {name, email, password, address, createdAt} = req.body
 
         const resultado = await pool.query(
-            `INSERT INTO usuarios (senha_hash, email, nome_completo, endereco, data_criacao) 
+            `INSERT INTO usuarios (nome_completo, email, senha_hash, endereco, data_criacao) 
              VALUES ($1, $2, $3, $4, $5) 
              `,
-            [senha_hash, email, nome_completo, endereco, new Date()]
+            [name, email, password, address, createdAt]
         )
 
         res.status(201).json({
-            senha_hash:senha_hash,
+            password:password,
             email:email,
-            nome_completo:nome_completo,
-            endereco:endereco
+            name:name,
+            address:address,
+            createdAt : createdAt
         })
 
     } catch (erro) {
