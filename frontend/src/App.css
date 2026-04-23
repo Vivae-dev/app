@@ -265,6 +265,78 @@ body {
 	font-weight: 600;
 }
 
+.checkout-view {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #1e293b;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+/* Título e Texto */
+.checkout-header {
+    margin-bottom: 2rem; /* Espaço para não colar no CEP */
+}
+
+/* Organização do Formulário */
+.checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem; /* Espaço uniforme entre as linhas */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0;
+}
+
+.flex-3 { flex: 3; } /* Rua mais larga */
+.flex-1 { flex: 1; } /* Número mais estreito */
+
+/* Inputs em geral */
+.input-field {
+    width: 100%;
+    padding: 0.8rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.input-field.readonly-field {
+    background-color: #1e293b !important; /* Mesma cor do fundo da caixa ou um tom diferente */
+    color: #64748b;
+    border-color: #334155;
+    cursor: not-allowed;
+}
+
+.back-button {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: 0.6rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    transition: 0.3s;
+}
+
+.back-button:hover {
+    background: #334155;
+    color: white;
+}
+
 @keyframes slideIn {
 	from {
 		transform: translateX(100%);

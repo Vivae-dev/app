@@ -36,12 +36,31 @@ function App() {
 	const reservaUrl =
 		import.meta.env.VITE_RESERVA_URI || 'http://localhost:8003';
 
+	const [selectedBox, setSelectedBox] = useState<Box | null>(null);
+
+	// Dados de Endereço
+	const [cep, setCep] = useState('');
+	const [rua, setRua] = useState('');
+	const [numero, setNumero] = useState('');
+	const [complemento, setComplemento] = useState('');
+
+	// Controle de Telas
+	const [currentView, setCurrentView] = useState<'catalog' | 'checkout-address' | 'checkout-confirm'>('catalog');
+
+	const showToast = (message: string) => {
+        const id = Date.now();
+        setToasts((prev) => [...prev, { id, message }]);
+        setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+    };
+
 	useEffect(() => {
 		axios
 			.get(`${catalogUrl}/api/caixas`)
 			.then((response) => {
 				setBoxes(response.data);
 				setTimeout(() => setLoading(false), 800);
+				const savedUser = localStorage.getItem('user');
+    			if (savedUser) setCurrentUser(JSON.parse(savedUser));
 			})
 			.catch((error) => {
 				console.error('Erro ao buscar caixas:', error);
@@ -69,6 +88,10 @@ function App() {
 				...prev,
 				{ id, message: `✨ Bem-vindo(a), ${res.data.name}!` },
 			]);
+
+			localStorage.setItem('user', JSON.stringify(res.data));
+			setCurrentUser(res.data);
+
 			setTimeout(
 				() => setToasts((prev) => prev.filter((t) => t.id !== id)),
 				5000,
@@ -85,35 +108,111 @@ function App() {
 		}
 	};
 
-	const handleBook = async (box: Box) => {
+	// Função para buscar endereço salvo no Banco
+	const checkSavedAddress = async () => {
 		try {
-			const res = await axios.post(`${reservaUrl}/api/reservas`, {
-				experienceId: box.id,
-				experienceName: box.name,
-				price: box.price,
-			});
-			console.log('Reserva feita:', res.data);
-
-			const id = Date.now();
-			setToasts((prev) => [
-				...prev,
-				{ id, message: `✨ ${box.name} reservado com sucesso!` },
-			]);
-
-			setTimeout(() => {
-				setToasts((prev) => prev.filter((t) => t.id !== id));
-			}, 5000);
+			const res = await axios.get(`${reservaUrl}/api/users/${currentUser.id}/address`);
+			
+			if (res.data && res.data.cep) {
+				setCep(res.data.cep);
+				setRua(res.data.rua || '');
+                setNumero(res.data.numero || '');
+				setComplemento(res.data.complemento || '');
+				return true; // Encontrou endereço
+			}
+			return false;
 		} catch (error) {
-			console.error('Erro ao reservar:', error);
-			const id = Date.now();
-			setToasts((prev) => [
-				...prev,
-				{ id, message: `❌ Erro ao reservar ${box.name}` },
-			]);
-			setTimeout(() => {
-				setToasts((prev) => prev.filter((t) => t.id !== id));
-			}, 5000);
+			return false; // Não encontrou ou erro
 		}
+	};
+
+	const handleBook = async (box: Box) => {
+		if (!currentUser) {
+            setShowAuthModal(true);
+            showToast("⚠️ Faça login para continuar.");
+            return;
+        }
+        
+        setSelectedBox(box);
+        setLoading(true);
+        const hasAddress = await checkSavedAddress();
+        setLoading(false);
+
+        if (hasAddress) {
+            setCurrentView('checkout-confirm');
+        } else {
+            setCurrentView('checkout-address');
+        }
+	};
+
+	const handleCepBlur = async () => {
+		const cleanCep = cep.replace(/\D/g, '');
+		if (cleanCep.length !== 8) return;
+
+		try {
+			const res = await axios.get(`https://viacep.com.br/ws/${cleanCep}/json/`);
+			if (!res.data.erro) {
+				// Preenche a rua e deixa o cursor pronto para o número
+				setRua(res.data.logradouro);
+				showToast("📍 Endereço localizado!");
+			} else {
+				showToast("❌ CEP não encontrado.");
+			}
+		} catch (error) {
+			console.error("Erro ao buscar CEP", error);
+		}
+	};
+
+	const confirmCheckout = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!selectedBox || !currentUser) return;
+
+        try {
+            const payload = {
+                experienceId: selectedBox.id,
+                experienceName: selectedBox.name,
+                price: selectedBox.price,
+                userId: currentUser.id,
+                address: { 
+                    cep, 
+                    rua, 
+                    numero,
+                    complemento 
+                }
+            };
+
+            await axios.post(`${reservaUrl}/api/reservas`, payload);
+            showToast(`✅ Pedido de ${selectedBox.name} realizado!`);
+            
+            // Reset de fluxo
+            setCurrentView('catalog');
+            setSelectedBox(null);
+            setCep('');
+            setRua('');
+            setNumero('');
+            setComplemento('');
+        } catch (error) {
+            showToast("❌ Erro ao finalizar reserva");
+        }
+    };
+
+	const handleLogout = () => {
+		// Limpa o armazenamento persistente
+		localStorage.removeItem('user');
+
+		// Limpa o estado da aplicação
+		setCurrentUser(null);
+
+		setCurrentView('catalog');
+
+		const id = Date.now();
+		setToasts((prev) => [
+			...prev,
+			{ id, message: "👋 Até logo! Você saiu da sua conta." },
+		]);
+		setTimeout(() => {
+			setToasts((prev) => prev.filter((t) => t.id !== id));
+		}, 4000);
 	};
 
 	return (
@@ -125,7 +224,7 @@ function App() {
 							<span style={{ color: '#94a3b8' }}>Olá, {currentUser.name}</span>
 							<button
 								className="auth-button"
-								onClick={() => setCurrentUser(null)}
+								onClick={handleLogout}
 							>
 								Sair
 							</button>
@@ -211,8 +310,9 @@ function App() {
 			)}
 
 			<main className="main-content">
-				<h2>Nossas Caixas Mensais e Avulsas</h2>
-
+				{currentView === 'catalog' && (
+        		<>
+				<h2>Nossas Caixas Mensais e Avulsas</h2>			
 				{loading ? (
 					<div className="product-grid">
 						{[1, 2, 3].map((i) => (
@@ -227,15 +327,8 @@ function App() {
 									<img src={box.image} alt={box.name} />
 								</div>
 								<h3>{box.name}</h3>
-								<p
-									style={{
-										fontSize: '0.9rem',
-										color: '#94a3b8',
-										marginBottom: '1rem',
-									}}
-								>
-									{box.type === 'ASSINATURA' ? '📦 Assinatura' : '🛍️ Avulsa'} -{' '}
-									{box.description}
+								<p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '1rem' }}>
+									{box.type === 'ASSINATURA' ? '📦 Assinatura' : '🛍️ Avulsa'} - {box.description}
 								</p>
 								<p className="price">
 									{new Intl.NumberFormat('pt-BR', {
@@ -243,27 +336,113 @@ function App() {
 										currency: 'BRL',
 									}).format(box.price)}
 									{box.type === 'ASSINATURA' && (
-										<span
-											style={{
-												fontSize: '1rem',
-												fontWeight: 'normal',
-												color: '#94a3b8',
-												marginLeft: '4px',
-											}}
-										>
+										<span style={{ fontSize: '1rem', fontWeight: 'normal', color: '#94a3b8', marginLeft: '4px' }}>
 											/ mês
 										</span>
 									)}
 								</p>
 								<button className="buy-button" onClick={() => handleBook(box)}>
-									{box.type === 'ASSINATURA'
-										? 'Assinar Agora'
-										: 'Comprar Avulsa'}
+									{box.type === 'ASSINATURA' ? 'Assinar Agora' : 'Comprar Avulsa'}
 								</button>
 							</div>
 						))}
 					</div>
 				)}
+			</>
+		)}
+		{currentView === 'checkout-address' && (
+			<div className="checkout-view">
+				<button className="back-button" onClick={() => setCurrentView('catalog')}>
+					⬅ Voltar para a vitrine
+				</button>
+				
+				<div className="checkout-header">
+					<h2>Dados de Entrega</h2>
+					<p>Preencha o CEP para localizarmos sua rua automaticamente.</p>
+				</div>
+
+				<form className="checkout-form" onSubmit={(e) => { e.preventDefault(); setCurrentView('checkout-confirm'); }}>
+					
+					{/* Linha 1: CEP Sozinho */}
+					<div className="form-group">
+						<label>CEP</label>
+						<input 
+							type="text" 
+							placeholder="00000-000" 
+							value={cep} 
+							onBlur={handleCepBlur} 
+							onChange={(e) => setCep(e.target.value)} 
+							required 
+							className="input-field"
+						/>
+					</div>
+
+					{/* Linha 2: Rua e Número Lado a Lado */}
+					<div className="form-row">
+						<div className="form-group flex-3">
+							<label>Rua (Preenchido pelo CEP)</label>
+							<input 
+								type="text" 
+								value={rua} 
+								readOnly 
+								placeholder="Digite o CEP acima..." 
+								className="input-field readonly-field" 
+							/>
+						</div>
+						<div className="form-group flex-1">
+							<label>Número</label>
+							<input 
+								type="text" 
+								placeholder="Ex: 123" 
+								value={numero} 
+								onChange={(e) => setNumero(e.target.value)} 
+								required 
+								className="input-field"
+							/>
+						</div>
+					</div>
+
+					{/* Linha 3: Complemento Sozinho */}
+					<div className="form-group">
+						<label>Complemento</label>
+						<input 
+							type="text" 
+							placeholder="Apto, bloco, ponto de referência..." 
+							value={complemento} 
+							onChange={(e) => setComplemento(e.target.value)} 
+							className="input-field"
+						/>
+					</div>
+
+					<button type="submit" className="submit-button main-buy-button">
+						Ir para Confirmação
+					</button>
+				</form>
+			</div>
+		)}
+
+                {currentView === 'checkout-confirm' && (
+                    <div className="checkout-view">
+                        <h2>Confirme seu Pedido</h2>
+                        <div className="summary-card">
+                            <p><strong>Item:</strong> {selectedBox?.name}</p>
+                            <p><strong>Endereço:</strong> {rua}, {numero}</p>
+							<p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                {cep} {complemento && ` - ${complemento}`}
+                            </p>
+                            <hr style={{ margin: '1rem 0', borderColor: '#334155' }} />
+                            <p className="price">
+								Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedBox?.price || 0)}
+							</p>
+                            </div>
+                        <button onClick={() => confirmCheckout()} className="submit-button" style={{ background: '#10b981' }}>
+                            Confirmar e Pagar
+                        </button>
+                        <button onClick={() => setCurrentView('checkout-address')} className="back-button">
+                            Alterar Endereço
+                        </button>
+                    </div>
+                )}
 			</main>
 
 			<div className="toast-container">
