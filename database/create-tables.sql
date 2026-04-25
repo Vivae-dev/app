@@ -40,3 +40,4 @@ ALTER TABLE usuarios ADD endereco VARCHAR(200);
 ALTER TABLE usuarios DROP COLUMN username;
 
 ALTER TABLE usuarios ADD data_criacao TIMESTAMP;
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';
