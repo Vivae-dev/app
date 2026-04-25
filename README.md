@@ -1,4 +1,5 @@
 # Grupo
+<!-- Atualizado para sincronização de histórico -->
 
 22.01341-5: Eduardo Dislich dos Santos  
 23.00035-0: Eduardo Martelli Marzagão  
