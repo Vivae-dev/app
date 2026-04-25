@@ -54,6 +54,33 @@ app.post('/cadastro', async (req, res) => {
     }
 })
 
+//Conferir usuário duplicado
+app.get('/cadastro', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const result = await pool.query(
+            'SELECT email FROM usuarios WHERE email = $1',
+            [email]
+        );
+
+        if (result.rows.length > 0) {
+            res.json("Já existe");
+        } else {
+            res.json("clear");
+        }
+
+        console.log(result.rows);
+
+    } catch (error) {
+        console.log(`Erro ao obter email: ${error}`);
+        res.status(500).json({
+            erro: 'Erro ao obter email'
+        });
+    }
+});
+
+
 app.get('/', (req, res) => {
     res.json({
         mensagem: 'Servidor funcionando!'
