@@ -2,10 +2,6 @@ import bcrypt from 'bcryptjs';
 import pool from './db';
 
 async function seed() {
-	await pool.query(
-		`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'`,
-	);
-
 	const email = 'admin@vivae.com';
 
 	const existing = await pool.query(
