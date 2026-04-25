@@ -45,7 +45,62 @@ function App() {
 	const [complemento, setComplemento] = useState('');
 
 	// Controle de Telas
-	const [currentView, setCurrentView] = useState<'catalog' | 'checkout-address' | 'checkout-confirm'>('catalog');
+	const [currentView, setCurrentView] = useState<'catalog' | 'checkout-address' | 'checkout-confirm' | 'admin'>('catalog');
+
+	// Admin
+	const [adminEditBox, setAdminEditBox] = useState<Box | null>(null);
+	const [adminForm, setAdminForm] = useState({
+		name: '', description: '', type: 'AVULSA' as 'ASSINATURA' | 'AVULSA',
+		price: 0, image: '', stock: 0,
+	});
+	const [adminLoading, setAdminLoading] = useState(false);
+
+	const authHeaders = () => ({
+		headers: { Authorization: `Bearer ${currentUser?.token}` },
+	});
+
+	const handleAdminEdit = (box: Box) => {
+		setAdminEditBox(box);
+		setAdminForm({ name: box.name, description: box.description, type: box.type, price: box.price, image: box.image, stock: box.stock });
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
+	const handleAdminClear = () => {
+		setAdminEditBox(null);
+		setAdminForm({ name: '', description: '', type: 'AVULSA', price: 0, image: '', stock: 0 });
+	};
+
+	const handleAdminSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setAdminLoading(true);
+		try {
+			if (adminEditBox) {
+				const res = await axios.put(`${catalogUrl}/api/caixas/${adminEditBox.id}`, adminForm, authHeaders());
+				setBoxes((prev) => prev.map((b) => (b.id === adminEditBox.id ? res.data : b)));
+				showToast('✅ Caixa atualizada!');
+			} else {
+				const res = await axios.post(`${catalogUrl}/api/caixas`, adminForm, authHeaders());
+				setBoxes((prev) => [...prev, res.data]);
+				showToast('✅ Caixa criada!');
+			}
+			handleAdminClear();
+		} catch (error: any) {
+			showToast(`❌ ${error.response?.data?.message || 'Erro ao salvar'}`);
+		} finally {
+			setAdminLoading(false);
+		}
+	};
+
+	const handleAdminDelete = async (id: number) => {
+		if (!window.confirm('Deletar esta caixa permanentemente?')) return;
+		try {
+			await axios.delete(`${catalogUrl}/api/caixas/${id}`, authHeaders());
+			setBoxes((prev) => prev.filter((b) => b.id !== id));
+			showToast('✅ Caixa removida!');
+		} catch (error: any) {
+			showToast(`❌ ${error.response?.data?.message || 'Erro ao deletar'}`);
+		}
+	};
 
 	const showToast = (message: string) => {
         const id = Date.now();
@@ -222,6 +277,15 @@ function App() {
 					{currentUser ? (
 						<>
 							<span style={{ color: '#94a3b8' }}>Olá, {currentUser.name}</span>
+							{currentUser.role === 'admin' && (
+								<button
+									className="auth-button"
+									onClick={() => setCurrentView('admin')}
+									style={{ background: '#7c3aed', marginRight: '0.5rem' }}
+								>
+									⚙️ Admin
+								</button>
+							)}
 							<button
 								className="auth-button"
 								onClick={handleLogout}
@@ -444,6 +508,129 @@ function App() {
                     </div>
                 )}
 			</main>
+
+			{currentView === 'admin' && (
+				<div className="checkout-view">
+					<button className="back-button" onClick={() => { setCurrentView('catalog'); handleAdminClear(); }}>
+						⬅ Voltar para a vitrine
+					</button>
+					<h2>⚙️ Painel Admin</h2>
+
+					<h3 style={{ marginBottom: '1rem' }}>{adminEditBox ? `Editar: ${adminEditBox.name}` : 'Nova Caixa'}</h3>
+					<form className="checkout-form" onSubmit={handleAdminSubmit}>
+						<div className="form-group">
+							<label>Nome</label>
+							<input
+								type="text"
+								required
+								className="input-field"
+								value={adminForm.name}
+								onChange={(e) => setAdminForm((p) => ({ ...p, name: e.target.value }))}
+							/>
+						</div>
+						<div className="form-group">
+							<label>Descrição</label>
+							<input
+								type="text"
+								className="input-field"
+								value={adminForm.description}
+								onChange={(e) => setAdminForm((p) => ({ ...p, description: e.target.value }))}
+							/>
+						</div>
+						<div className="form-row">
+							<div className="form-group flex-1">
+								<label>Tipo</label>
+								<select
+									className="input-field"
+									value={adminForm.type}
+									onChange={(e) => setAdminForm((p) => ({ ...p, type: e.target.value as 'ASSINATURA' | 'AVULSA' }))}
+								>
+									<option value="AVULSA">Avulsa</option>
+									<option value="ASSINATURA">Assinatura</option>
+								</select>
+							</div>
+							<div className="form-group flex-1">
+								<label>Preço (R$)</label>
+								<input
+									type="number"
+									step="0.01"
+									min="0"
+									required
+									className="input-field"
+									value={adminForm.price}
+									onChange={(e) => setAdminForm((p) => ({ ...p, price: parseFloat(e.target.value) || 0 }))}
+								/>
+							</div>
+							<div className="form-group flex-1">
+								<label>Estoque</label>
+								<input
+									type="number"
+									min="0"
+									className="input-field"
+									value={adminForm.stock}
+									onChange={(e) => setAdminForm((p) => ({ ...p, stock: parseInt(e.target.value) || 0 }))}
+								/>
+							</div>
+						</div>
+						<div className="form-group">
+							<label>URL da Imagem</label>
+							<input
+								type="text"
+								className="input-field"
+								placeholder="https://..."
+								value={adminForm.image}
+								onChange={(e) => setAdminForm((p) => ({ ...p, image: e.target.value }))}
+							/>
+						</div>
+						<div style={{ display: 'flex', gap: '1rem' }}>
+							<button type="submit" className="submit-button" disabled={adminLoading}>
+								{adminLoading ? 'Salvando...' : adminEditBox ? 'Atualizar Caixa' : 'Criar Caixa'}
+							</button>
+							{adminEditBox && (
+								<button type="button" onClick={handleAdminClear} className="back-button">
+									Cancelar
+								</button>
+							)}
+						</div>
+					</form>
+
+					<h3 style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+						Caixas Cadastradas ({boxes.length})
+					</h3>
+					<div className="product-grid">
+						{boxes.map((box) => (
+							<div key={box.id} className="product-card">
+								<div className="product-image">
+									<img src={box.image} alt={box.name} />
+								</div>
+								<h3>{box.name}</h3>
+								<p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
+									{box.type === 'ASSINATURA' ? '📦 Assinatura' : '🛍️ Avulsa'}
+								</p>
+								<p className="price">
+									{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(box.price)}
+								</p>
+								<div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+									<button
+										className="buy-button"
+										style={{ background: '#f59e0b', flex: 1 }}
+										onClick={() => handleAdminEdit(box)}
+									>
+										✏️ Editar
+									</button>
+									<button
+										className="buy-button"
+										style={{ background: '#ef4444', flex: 1 }}
+										onClick={() => handleAdminDelete(box.id)}
+									>
+										🗑️ Deletar
+									</button>
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			)}
 
 			<div className="toast-container">
 				{toasts.map((toast) => (
