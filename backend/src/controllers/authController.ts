@@ -26,10 +26,10 @@ export const AuthController = {
 			const hashedPassword = await bcrypt.hash(password, 10);
 
 			const result = await pool.query(
-				`INSERT INTO usuarios (nome_completo, email, senha_hash, data_criacao, role)
-				 VALUES ($1, $2, $3, NOW(), 'user')
-				 RETURNING id_usuario, nome_completo, email, role`,
-				[name, email, hashedPassword],
+				`INSERT INTO usuarios (nome_completo, email, senha_hash, endereco, data_criacao, role)
+				 VALUES ($1, $2, $3, $4, NOW(), 'user')
+				 RETURNING id_usuario, nome_completo, email, endereco, role`,
+				[name, email, hashedPassword, address || null],
 			);
 
 			const user = result.rows[0];
@@ -39,6 +39,7 @@ export const AuthController = {
 				id: user.id_usuario,
 				name: user.nome_completo,
 				email: user.email,
+				address: user.endereco,
 				role: user.role,
 				token,
 			});
@@ -57,7 +58,7 @@ export const AuthController = {
 
 		try {
 			const result = await pool.query(
-				`SELECT id_usuario, nome_completo, email, senha_hash, role
+				`SELECT id_usuario, nome_completo, email, senha_hash, endereco, role
 				 FROM usuarios WHERE email = $1`,
 				[email],
 			);
@@ -79,6 +80,7 @@ export const AuthController = {
 				id: user.id_usuario,
 				name: user.nome_completo,
 				email: user.email,
+				address: user.endereco,
 				role: user.role,
 				token,
 			});
