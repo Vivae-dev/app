@@ -2,12 +2,15 @@
 
 CREATE TABLE IF NOT EXISTS usuarios (
     id_usuario SERIAL NOT NULL PRIMARY KEY,
-    senha_hash VARCHAR(60),
+    nome_completo VARCHAR(100),
     email VARCHAR(255),
-    nome_completo VARCHAR(100)
-    CEP VARCHAR (8),
-    logradouro VARCHAR (100),
-    complemento VARCHAR (50)
+    senha_hash VARCHAR(60),
+    CEP VARCHAR(8),
+    logradouro VARCHAR(100),
+    complemento VARCHAR(50),
+    endereco VARCHAR(255),
+    role VARCHAR(20) DEFAULT 'user',
+    data_criacao TIMESTAMP
 );
 
 /* MS CATALOGO DE PRODUTOS */
@@ -42,19 +45,11 @@ CREATE TABLE IF NOT EXISTS pedidos(
     data_reserva TIMESTAMP,
     valor_total FLOAT,
     estado status_pedido
-)
+);
 
 CREATE TABLE IF NOT EXISTS itensPedido(
     id_pedido INT,
     FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
     id_produto INT,
-    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto),
-)
-
-
-
-<<<<<<< Updated upstream
-ALTER TABLE usuarios ADD data_criacao TIMESTAMP;
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';
-=======
->>>>>>> Stashed changes
+    FOREIGN KEY (id_produto) REFERENCES produtos(id_produto)
+);
