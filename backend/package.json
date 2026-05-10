@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/catalogo.js & node dist/reserva.js & node dist/auth.js",
-    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/reserva.ts\" \"ts-node-dev --respawn --transpile-only src/auth.ts\" \"ts-node-dev --respawn --transpile-only src/server.js\"",
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/reserva.ts\" \"ts-node-dev --respawn --transpile-only src/server.js\"",
     "build": "tsc",
     "seed": "ts-node-dev --transpile-only src/seed.ts"
   },
