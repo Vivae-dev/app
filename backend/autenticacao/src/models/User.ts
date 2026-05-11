@@ -3,7 +3,9 @@ export interface User {
 	name: string;
 	email: string;
 	password: string;
-	address?: string;
+	cep?: string;
+	logradouro?: string;
+	complemento?: string;
 	role?: 'user' | 'admin';
 	createdAt: Date;
 }
