@@ -1,6 +1,7 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -14,6 +15,31 @@ app.use(
 );
 app.use(express.json());
 
+interface AuthRequest extends Request {
+	user?: { id: number; email: string; role: string };
+}
+
+const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+	const token = req.headers.authorization?.split(' ')[1];
+
+	if (!token) {
+		res.status(401).json({ message: 'Token não fornecido.' });
+		return;
+	}
+
+	try {
+		const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret') as {
+			id: number;
+			email: string;
+			role: string;
+		};
+		req.user = payload;
+		next();
+	} catch {
+		res.status(401).json({ message: 'Token inválido ou expirado.' });
+	}
+};
+
 const reservas: any[] = [];
 
 app.get('/api/health', (req, res) => {
@@ -23,7 +49,7 @@ app.get('/api/health', (req, res) => {
 	});
 });
 
-app.post('/api/reservas', (req, res) => {
+app.post('/api/reservas', authenticate, (req: AuthRequest, res) => {
 	const { experienceId, experienceName, price } = req.body;
 
 	if (!experienceId) {
@@ -32,6 +58,7 @@ app.post('/api/reservas', (req, res) => {
 
 	const novaReserva = {
 		id: reservas.length + 1,
+		userId: req.user!.id,
 		experienceId,
 		experienceName,
 		price,

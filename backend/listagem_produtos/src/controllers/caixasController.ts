@@ -1,115 +1,95 @@
 import { Request, Response } from 'express';
-import { Box } from '../models/Box';
+import pool from '../db';
 
-let boxes: Box[] = [
-	{
-		id: 1,
-		name: 'Plano Mensal: Um Novo Hobby',
-		description:
-			'A cada mês, receba um kit 100% surpresa com tudo o que você precisa para aprender uma nova habilidade do zero!',
-		type: 'ASSINATURA',
-		price: 89.9,
-		image:
-			'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=800&auto=format&fit=crop',
-		stock: 100,
-	},
-	{
-		id: 2,
-		name: 'Caixa Antiga: Cerâmica Artesanal',
-		description:
-			'Hobby do mês passado! Leve para casa argila, ferramentas de escultura e tintas para modelar e pintar sua própria caneca.',
-		type: 'AVULSA',
-		price: 110.0,
-		image:
-			'https://images.unsplash.com/photo-1590605105526-5c08f63f89aa?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-		stock: 15,
-	},
-	{
-		id: 3,
-		name: 'Caixa Antiga: Cultivo Botânico',
-		description:
-			'Nostalgia Pura. Tudo o que você precisa para começar a sua horta indoor: Sementes especiais, vasos orgânicos e manual de germinação.',
-		type: 'AVULSA',
-		price: 95.5,
-		image:
-			'https://plus.unsplash.com/premium_photo-1678382344509-ed0ff45be16b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-		stock: 5,
-	},
-];
+const toBox = (r: any) => ({
+	id: r.id,
+	name: r.nome,
+	description: r.descricao,
+	type: r.tipo,
+	price: r.preco,
+	image: r.imagem,
+	stock: r.estoque,
+});
 
 export const CaixasController = {
-	getAll(req: Request, res: Response) {
+	async getAll(req: Request, res: Response) {
 		const { type } = req.query;
-		if (type) {
-			const filteredBoxes = boxes.filter(
-				(b) => b.type === String(type).toUpperCase(),
-			);
-			return res.json(filteredBoxes);
+		try {
+			const query = type
+				? { text: 'SELECT * FROM caixas WHERE tipo = $1 ORDER BY id', values: [String(type).toUpperCase()] }
+				: { text: 'SELECT * FROM caixas ORDER BY id', values: [] };
+			const result = await pool.query(query);
+			res.json(result.rows.map(toBox));
+		} catch (err) {
+			res.status(500).json({ message: 'Erro ao buscar caixas.' });
 		}
-		res.json(boxes);
 	},
 
-	getById(req: Request, res: Response) {
-		const id = parseInt(req.params.id as string);
-		const box = boxes.find((b) => b.id === id);
-
-		if (!box) {
-			return res.status(404).json({ message: 'Caixa não encontrada' });
+	async getById(req: Request, res: Response) {
+		try {
+			const result = await pool.query('SELECT * FROM caixas WHERE id = $1', [req.params.id]);
+			if (result.rows.length === 0) {
+				return res.status(404).json({ message: 'Caixa não encontrada' });
+			}
+			res.json(toBox(result.rows[0]));
+		} catch (err) {
+			res.status(500).json({ message: 'Erro ao buscar caixa.' });
 		}
-		res.json(box);
 	},
 
-	create(req: Request, res: Response) {
+	async create(req: Request, res: Response) {
 		const { name, description, type, price, image, stock } = req.body;
-
 		if (!name || !price || !type) {
-			return res
-				.status(400)
-				.json({ message: 'Campos nome, preço e tipo são obrigatórios.' });
+			return res.status(400).json({ message: 'Campos nome, preço e tipo são obrigatórios.' });
 		}
-
-		const newBox: Box = {
-			id: boxes.length > 0 ? Math.max(...boxes.map((b) => b.id)) + 1 : 1,
-			name,
-			description: description || '',
-			type,
-			price,
-			image: image || '',
-			stock: stock || 0,
-		};
-
-		boxes.push(newBox);
-
-		res.status(201).json(newBox);
+		try {
+			const result = await pool.query(
+				`INSERT INTO caixas (nome, descricao, tipo, preco, imagem, estoque)
+				 VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+				[name, description || '', type, price, image || '', stock || 0],
+			);
+			res.status(201).json(toBox(result.rows[0]));
+		} catch (err) {
+			res.status(500).json({ message: 'Erro ao criar caixa.' });
+		}
 	},
 
-	update(req: Request, res: Response) {
-		const id = parseInt(req.params.id as string);
-		const boxIndex = boxes.findIndex((b) => b.id === id);
-
-		if (boxIndex === -1) {
-			return res.status(404).json({ message: 'Caixa não encontrada' });
+	async update(req: Request, res: Response) {
+		const { name, description, type, price, image, stock } = req.body;
+		try {
+			const current = await pool.query('SELECT * FROM caixas WHERE id = $1', [req.params.id]);
+			if (current.rows.length === 0) {
+				return res.status(404).json({ message: 'Caixa não encontrada' });
+			}
+			const c = current.rows[0];
+			const result = await pool.query(
+				`UPDATE caixas SET nome=$1, descricao=$2, tipo=$3, preco=$4, imagem=$5, estoque=$6
+				 WHERE id=$7 RETURNING *`,
+				[
+					name ?? c.nome,
+					description ?? c.descricao,
+					type ?? c.tipo,
+					price ?? c.preco,
+					image ?? c.imagem,
+					stock ?? c.estoque,
+					req.params.id,
+				],
+			);
+			res.json(toBox(result.rows[0]));
+		} catch (err) {
+			res.status(500).json({ message: 'Erro ao atualizar caixa.' });
 		}
-
-		const updatedBox: Box = {
-			...boxes[boxIndex],
-			...req.body,
-			id,
-		};
-
-		boxes[boxIndex] = updatedBox;
-		res.json(updatedBox);
 	},
 
-	delete(req: Request, res: Response) {
-		const id = parseInt(req.params.id as string);
-		const boxIndex = boxes.findIndex((b) => b.id === id);
-
-		if (boxIndex === -1) {
-			return res.status(404).json({ message: 'Caixa não encontrada' });
+	async delete(req: Request, res: Response) {
+		try {
+			const result = await pool.query('DELETE FROM caixas WHERE id = $1 RETURNING id', [req.params.id]);
+			if (result.rowCount === 0) {
+				return res.status(404).json({ message: 'Caixa não encontrada' });
+			}
+			res.json({ message: 'Caixa deletada.' });
+		} catch (err) {
+			res.status(500).json({ message: 'Erro ao deletar caixa.' });
 		}
-
-		boxes.splice(boxIndex, 1);
-		res.status(204).send();
 	},
 };
