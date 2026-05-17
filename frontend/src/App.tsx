@@ -170,7 +170,7 @@ function App() {
 	// Função para buscar endereço salvo no Banco
 	const checkSavedAddress = async () => {
 		try {
-			const res = await axios.get(`${reservaUrl}/api/users/${currentUser.id}/address`);
+			const res = await axios.get(`${reservaUrl}/api/users/${currentUser.id}/address`, authHeaders());
 			
 			if (res.data && res.data.cep) {
 				setCep(res.data.cep);
@@ -240,9 +240,9 @@ function App() {
                 }
             };
 
-            await axios.post(`${reservaUrl}/api/reservas`, payload);
+            await axios.post(`${reservaUrl}/api/reservas`, payload, authHeaders());
             showToast(`✅ Pedido de ${selectedBox.name} realizado!`);
-            
+
             // Reset de fluxo
             setCurrentView('catalog');
             setSelectedBox(null);
@@ -250,7 +250,8 @@ function App() {
             setRua('');
             setNumero('');
             setComplemento('');
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Erro ao finalizar reserva:', error.response?.data || error.message);
             showToast("❌ Erro ao finalizar reserva");
         }
     };
