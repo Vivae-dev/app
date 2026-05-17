@@ -50,3 +50,85 @@ Todos os microsserviços serão compilados e minificados para a pasta `dist/` do
 O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
 
 ![alt text](image.png)
+
+## Rotas da API
+
+### Autenticação — `http://localhost:8002`
+
+| Método | Rota                         | Auth | Descrição                                      |
+| ------ | ---------------------------- | ---- | ---------------------------------------------- |
+| `GET`  | `/api/auth/health`           | —    | Status do serviço                              |
+| `POST` | `/api/auth/register`         | —    | Cadastra usuário e envia e-mail de confirmação |
+| `POST` | `/api/auth/login`            | —    | Login; retorna JWT (conta deve estar ativa)    |
+| `GET`  | `/api/auth/confirmar/:token` | —    | Ativa conta pelo token recebido por e-mail     |
+
+**Body — `POST /api/auth/register`**
+
+```json
+{
+	"name": "string",
+	"email": "string",
+	"password": "string",
+	"cep": "string (opcional)",
+	"logradouro": "string (opcional)",
+	"numeroCasa": "string (opcional)",
+	"complemento": "string (opcional)"
+}
+```
+
+**Body — `POST /api/auth/login`**
+
+```json
+{ "email": "string", "password": "string" }
+```
+
+---
+
+### Catálogo de Produtos — `http://localhost:8001`
+
+| Método   | Rota              | Auth  | Descrição                                        |
+| -------- | ----------------- | ----- | ------------------------------------------------ |
+| `GET`    | `/api/health`     | —     | Status do serviço                                |
+| `GET`    | `/api/caixas`     | —     | Lista caixas (query: `?type=ASSINATURA\|AVULSA`) |
+| `GET`    | `/api/caixas/:id` | —     | Busca caixa por ID                               |
+| `POST`   | `/api/caixas`     | admin | Cria nova caixa                                  |
+| `PUT`    | `/api/caixas/:id` | admin | Atualiza caixa                                   |
+| `DELETE` | `/api/caixas/:id` | admin | Remove caixa                                     |
+
+**Body — `POST/PUT /api/caixas`**
+
+```json
+{
+	"name": "string",
+	"description": "string (opcional)",
+	"type": "ASSINATURA | AVULSA",
+	"price": "number",
+	"image": "string (opcional)",
+	"stock": "number (opcional)"
+}
+```
+
+---
+
+### Carrinho/Reservas — `http://localhost:8003`
+
+| Método | Rota            | Auth | Descrição         |
+| ------ | --------------- | ---- | ----------------- |
+| `GET`  | `/api/health`   | —    | Status do serviço |
+| `POST` | `/api/reservas` | JWT  | Cria reserva      |
+
+**Body — `POST /api/reservas`**
+
+```json
+{
+	"experienceId": "number",
+	"experienceName": "string",
+	"price": "number",
+	"address": {
+		"cep": "string",
+		"rua": "string",
+		"numero": "string",
+		"complemento": "string (opcional)"
+	}
+}
+```

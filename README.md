@@ -36,3 +36,40 @@ npm run dev
 ```
 
 O frontend do Vivae estará disponível em [http://localhost:8000](http://localhost:8000)
+
+---
+
+## Portas dos Microsserviços
+
+| Serviço              | Porta |
+| -------------------- | ----- |
+| Frontend             | 8000  |
+| Catálogo de Produtos | 8001  |
+| Autenticação         | 8002  |
+| Carrinho/Reservas    | 8003  |
+
+## Configuração de E-mail (SMTP)
+
+Preencha as variáveis em `backend/autenticacao/.env`:
+
+```env
+SMTP_HOST=smtp.seuservidor.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu@email.com
+SMTP_PASS=sua_senha
+SMTP_FROM=noreply@vivae.com
+AUTH_BASE_URL=http://localhost:8002
+```
+
+## TODOs Pendentes
+
+- [ ] `carrinho/reserva.ts` — persistir reservas no banco (tabela `pedidos`)
+- [ ] `carrinho/reserva.ts` — implementar `GET /api/users/:id/address` (frontend já chama)
+- [ ] `authController.ts` — adicionar coluna `token_expiry` e checar expiração do token de confirmação
+- [ ] `authController.ts` — endpoint `POST /api/auth/reenviar-confirmacao`
+- [ ] `caixasController.ts` — proteger rotas de escrita com middleware de admin
+- [ ] `App.tsx` — fluxo pós-cadastro: mostrar "verifique seu e-mail" em vez de tentar logar
+- [x] `App.tsx` — adicionar campo `numeroCasa` no formulário de cadastro
+- [ ] `App.tsx` — página `/confirmar/:token` para ativar conta pelo link do e-mail
+- [ ] `App.tsx` — quebrar em componentes (AuthModal, ProductCard, CheckoutFlow, AdminPanel)
