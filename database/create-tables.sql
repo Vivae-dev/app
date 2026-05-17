@@ -7,8 +7,11 @@ CREATE TABLE IF NOT EXISTS usuarios (
     senha_hash VARCHAR(60),
     CEP VARCHAR(8),
     logradouro VARCHAR(100),
+    numero_casa VARCHAR(20),
     complemento VARCHAR(50),
     role VARCHAR(20) DEFAULT 'user',
+    ativo BOOLEAN DEFAULT FALSE,
+    token_confirmacao VARCHAR(64),
     data_criacao TIMESTAMP
 );
 
