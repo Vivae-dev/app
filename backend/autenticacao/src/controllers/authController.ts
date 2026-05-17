@@ -1,3 +1,5 @@
+// TODO: adicionar rate limiting no register e login (ex: express-rate-limit)
+// TODO: endpoint POST /api/auth/reenviar-confirmacao para reenviar email
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -6,14 +8,19 @@ import pool from '../db';
 import { sendConfirmationEmail } from '../email';
 
 const generateToken = (id: number, email: string, role: string) =>
-	jwt.sign({ id, email, role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+	jwt.sign({ id, email, role }, process.env.JWT_SECRET || 'secret', {
+		expiresIn: '7d',
+	});
 
 export const AuthController = {
 	register: async (req: Request, res: Response) => {
-		const { name, email, password, cep, logradouro, numeroCasa, complemento } = req.body;
+		const { name, email, password, cep, logradouro, numeroCasa, complemento } =
+			req.body;
 
 		if (!name || !email || !password) {
-			return res.status(400).json({ message: 'Nome, e-mail e senha são obrigatórios.' });
+			return res
+				.status(400)
+				.json({ message: 'Nome, e-mail e senha são obrigatórios.' });
 		}
 
 		try {
@@ -26,18 +33,40 @@ export const AuthController = {
 			}
 
 			const hashedPassword = await bcrypt.hash(password, 10);
+			// TODO: mudar ativo para FALSE e descomentar sendConfirmationEmail quando frontend tiver página /confirmar/:token
 			const confirmToken = crypto.randomBytes(32).toString('hex');
 
-			await pool.query(
+			const result = await pool.query(
 				`INSERT INTO usuarios (nome_completo, email, senha_hash, CEP, logradouro, numero_casa, complemento, data_criacao, role, ativo, token_confirmacao)
-				 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), 'user', FALSE, $8)`,
-				[name, email, hashedPassword, cep ?? null, logradouro ?? null, numeroCasa ?? null, complemento ?? null, confirmToken],
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), 'user', TRUE, $8)
+				 RETURNING id_usuario, nome_completo, email, CEP, logradouro, numero_casa, complemento, role`,
+				[
+					name,
+					email,
+					hashedPassword,
+					cep ?? null,
+					logradouro ?? null,
+					numeroCasa ?? null,
+					complemento ?? null,
+					confirmToken,
+				],
 			);
 
-			await sendConfirmationEmail(email, confirmToken);
+			// await sendConfirmationEmail(email, confirmToken);
+
+			const user = result.rows[0];
+			const token = generateToken(user.id_usuario, user.email, user.role);
 
 			res.status(201).json({
-				message: 'Cadastro realizado. Verifique seu e-mail para ativar a conta.',
+				id: user.id_usuario,
+				name: user.nome_completo,
+				email: user.email,
+				cep: user.cep,
+				logradouro: user.logradouro,
+				numeroCasa: user.numero_casa,
+				complemento: user.complemento,
+				role: user.role,
+				token,
 			});
 		} catch (err) {
 			console.error(err);
@@ -49,6 +78,7 @@ export const AuthController = {
 		const { token } = req.params;
 
 		try {
+			// TODO: checar token_expiry — adicionar coluna token_expiry TIMESTAMP e rejeitar se NOW() > token_expiry
 			const result = await pool.query(
 				`UPDATE usuarios SET ativo = TRUE, token_confirmacao = NULL
 				 WHERE token_confirmacao = $1 AND ativo = FALSE
@@ -57,7 +87,9 @@ export const AuthController = {
 			);
 
 			if (result.rows.length === 0) {
-				return res.status(400).json({ message: 'Token inválido ou conta já ativada.' });
+				return res
+					.status(400)
+					.json({ message: 'Token inválido ou conta já ativada.' });
 			}
 
 			const user = result.rows[0];
@@ -85,7 +117,9 @@ export const AuthController = {
 		const { email, password } = req.body;
 
 		if (!email || !password) {
-			return res.status(400).json({ message: 'E-mail e senha são obrigatórios.' });
+			return res
+				.status(400)
+				.json({ message: 'E-mail e senha são obrigatórios.' });
 		}
 
 		try {
@@ -102,7 +136,9 @@ export const AuthController = {
 			const user = result.rows[0];
 
 			if (!user.ativo) {
-				return res.status(403).json({ message: 'Conta não ativada. Verifique seu e-mail.' });
+				return res
+					.status(403)
+					.json({ message: 'Conta não ativada. Verifique seu e-mail.' });
 			}
 
 			const passwordMatch = await bcrypt.compare(password, user.senha_hash);

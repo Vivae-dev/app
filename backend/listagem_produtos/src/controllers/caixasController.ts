@@ -16,7 +16,10 @@ export const CaixasController = {
 		const { type } = req.query;
 		try {
 			const query = type
-				? { text: 'SELECT * FROM caixas WHERE tipo = $1 ORDER BY id', values: [String(type).toUpperCase()] }
+				? {
+						text: 'SELECT * FROM caixas WHERE tipo = $1 ORDER BY id',
+						values: [String(type).toUpperCase()],
+					}
 				: { text: 'SELECT * FROM caixas ORDER BY id', values: [] };
 			const result = await pool.query(query);
 			res.json(result.rows.map(toBox));
@@ -27,7 +30,9 @@ export const CaixasController = {
 
 	async getById(req: Request, res: Response) {
 		try {
-			const result = await pool.query('SELECT * FROM caixas WHERE id = $1', [req.params.id]);
+			const result = await pool.query('SELECT * FROM caixas WHERE id = $1', [
+				req.params.id,
+			]);
 			if (result.rows.length === 0) {
 				return res.status(404).json({ message: 'Caixa não encontrada' });
 			}
@@ -40,7 +45,9 @@ export const CaixasController = {
 	async create(req: Request, res: Response) {
 		const { name, description, type, price, image, stock } = req.body;
 		if (!name || !price || !type) {
-			return res.status(400).json({ message: 'Campos nome, preço e tipo são obrigatórios.' });
+			return res
+				.status(400)
+				.json({ message: 'Campos nome, preço e tipo são obrigatórios.' });
 		}
 		try {
 			const result = await pool.query(
@@ -57,7 +64,9 @@ export const CaixasController = {
 	async update(req: Request, res: Response) {
 		const { name, description, type, price, image, stock } = req.body;
 		try {
-			const current = await pool.query('SELECT * FROM caixas WHERE id = $1', [req.params.id]);
+			const current = await pool.query('SELECT * FROM caixas WHERE id = $1', [
+				req.params.id,
+			]);
 			if (current.rows.length === 0) {
 				return res.status(404).json({ message: 'Caixa não encontrada' });
 			}
@@ -83,7 +92,10 @@ export const CaixasController = {
 
 	async delete(req: Request, res: Response) {
 		try {
-			const result = await pool.query('DELETE FROM caixas WHERE id = $1 RETURNING id', [req.params.id]);
+			const result = await pool.query(
+				'DELETE FROM caixas WHERE id = $1 RETURNING id',
+				[req.params.id],
+			);
 			if (result.rowCount === 0) {
 				return res.status(404).json({ message: 'Caixa não encontrada' });
 			}

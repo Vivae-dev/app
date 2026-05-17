@@ -19,7 +19,11 @@ interface AuthRequest extends Request {
 	user?: { id: number; email: string; role: string };
 }
 
-const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+const authenticate = (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+): void => {
 	const token = req.headers.authorization?.split(' ')[1];
 
 	if (!token) {
@@ -40,6 +44,8 @@ const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void
 	}
 };
 
+// TODO: implementar GET /api/reservas para listar reservas do usuário autenticado
+// TODO: implementar GET /api/users/:id/address — o frontend já chama este endpoint
 const reservas: any[] = [];
 
 app.get('/api/health', (req, res) => {
