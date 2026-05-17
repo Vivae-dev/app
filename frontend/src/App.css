@@ -269,9 +269,22 @@ body {
     max-width: 500px;
     margin: 2rem auto;
     padding: 2rem;
-    background: #1e293b;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.admin-view {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 10;
 }
 
 /* Título e Texto */

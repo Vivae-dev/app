@@ -123,6 +123,10 @@ function App() {
 			});
 	}, [catalogUrl]);
 
+	// TODO: após register, mostrar mensagem "verifique seu e-mail" em vez de tentar logar
+	// TODO: adicionar campos numeroCasa no formulário de cadastro (registro agora aceita numeroCasa)
+	// TODO: adicionar página /confirmar/:token que chama GET /api/auth/confirmar/:token
+	// TODO: quebrar em componentes (AuthModal, ProductCard, CheckoutFlow, AdminPanel)
 	const handleAuth = async (e: React.FormEvent) => {
 		e.preventDefault();
 		try {
@@ -510,7 +514,7 @@ function App() {
 			</main>
 
 			{currentView === 'admin' && (
-				<div className="checkout-view">
+				<div className="admin-view">
 					<button className="back-button" onClick={() => { setCurrentView('catalog'); handleAdminClear(); }}>
 						⬅ Voltar para a vitrine
 					</button>
