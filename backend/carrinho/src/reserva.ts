@@ -1,12 +1,23 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import jwt from 'jsonwebtoken';
+import { Pool } from 'pg';
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const port = parseInt(process.env.RESERVA_PORT || '8003', 10);
+
+const pool = new Pool({
+	host: process.env.DB_HOST,
+	user: process.env.DB_USER,
+	password: process.env.DB_PASSWORD,
+	database: process.env.DB_NAME,
+	port: parseInt(process.env.DB_PORT || '5432'),
+	ssl: { rejectUnauthorized: false },
+});
 
 app.use(
 	cors({
@@ -45,8 +56,6 @@ const authenticate = (
 };
 
 // TODO: implementar GET /api/reservas para listar reservas do usuário autenticado
-// TODO: implementar GET /api/users/:id/address — o frontend já chama este endpoint
-const reservas: any[] = [];
 
 app.get('/api/health', (req, res) => {
 	res.json({
@@ -55,30 +64,75 @@ app.get('/api/health', (req, res) => {
 	});
 });
 
-app.post('/api/reservas', authenticate, (req: AuthRequest, res) => {
-	const { experienceId, experienceName, price } = req.body;
+app.get('/api/users/:id/address', authenticate, async (req: AuthRequest, res) => {
+	try {
+		const result = await pool.query(
+			'SELECT CEP, logradouro, numero_casa, complemento FROM usuarios WHERE id_usuario = $1',
+			[req.params.id],
+		);
+		if (result.rows.length === 0) {
+			return res.status(404).json({ message: 'Usuário não encontrado.' });
+		}
+		const r = result.rows[0];
+		res.json({
+			cep: r.cep,
+			rua: r.logradouro,
+			numero: r.numero_casa,
+			complemento: r.complemento,
+		});
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ message: 'Erro ao buscar endereço.' });
+	}
+});
+
+app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
+	const { experienceId, experienceName, price, address } = req.body;
 
 	if (!experienceId) {
 		return res.status(400).json({ error: 'ID da experiência é obrigatório' });
 	}
 
-	const novaReserva = {
-		id: reservas.length + 1,
-		userId: req.user!.id,
-		experienceId,
-		experienceName,
-		price,
-		status: 'CONFIRMADA',
-		createdAt: new Date(),
-	};
+	try {
+		if (address) {
+			await pool.query(
+				`UPDATE usuarios SET CEP = $1, logradouro = $2, numero_casa = $3, complemento = $4
+				 WHERE id_usuario = $5`,
+				[
+					address.cep ?? null,
+					address.rua ?? null,
+					address.numero ?? null,
+					address.complemento ?? null,
+					req.user!.id,
+				],
+			);
+		}
 
-	reservas.push(novaReserva);
-	console.log('Nova reserva recebida no microsserviço:', novaReserva);
+		const pedidoResult = await pool.query(
+			`INSERT INTO pedidos (id_usuario, data_reserva, valor_total, estado)
+			 VALUES ($1, NOW(), $2, 'pago')
+			 RETURNING id_pedido, data_reserva`,
+			[req.user!.id, price],
+		);
 
-	res.status(201).json({
-		message: 'Reserva confirmada!',
-		reserva: novaReserva,
-	});
+		const pedido = pedidoResult.rows[0];
+
+		res.status(201).json({
+			message: 'Reserva confirmada!',
+			reserva: {
+				id: pedido.id_pedido,
+				userId: req.user!.id,
+				experienceId,
+				experienceName,
+				price,
+				status: 'pago',
+				createdAt: pedido.data_reserva,
+			},
+		});
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ message: 'Erro ao criar reserva.' });
+	}
 });
 
 app.listen(port, () => {
