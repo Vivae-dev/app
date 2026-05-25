@@ -2,7 +2,7 @@ const path = require('path');
 const { Pool } = require(path.join(__dirname, '../backend/autenticacao/node_modules/pg'));
 
 require(path.join(__dirname, '../backend/autenticacao/node_modules/dotenv')).config({
-	path: path.join(__dirname, '../backend/autenticacao/.env'),
+	path: path.join(__dirname, '../backend/.env'),
 });
 
 const pool = new Pool({

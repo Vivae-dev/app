@@ -38,6 +38,16 @@ CREATE TABLE IF NOT EXISTS composicao_produtos (
     PRIMARY KEY (id_produto, id_material)
 );
 
+CREATE TABLE IF NOT EXISTS caixas (
+    id SERIAL NOT NULL PRIMARY KEY,
+    nome VARCHAR(100),
+    descricao VARCHAR(255),
+    tipo VARCHAR(20),
+    preco FLOAT,
+    imagem VARCHAR(500),
+    estoque INT DEFAULT 0
+);
+
 /* MS CARRINHO/PEDIDOS */
 
 CREATE TYPE status_pedido AS ENUM ('carrinho', 'pago', 'enviado', 'entregue');
@@ -46,9 +56,11 @@ CREATE TABLE IF NOT EXISTS pedidos (
     id_pedido SERIAL NOT NULL PRIMARY KEY,
     id_usuario INT,
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
+    id_caixa INT REFERENCES caixas(id) ON DELETE SET NULL,
     data_reserva TIMESTAMP,
     valor_total FLOAT,
-    estado status_pedido
+    estado status_pedido,
+    nome_experiencia VARCHAR(150)
 );
 
 CREATE TABLE IF NOT EXISTS itensPedido (
