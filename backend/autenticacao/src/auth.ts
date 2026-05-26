@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import authRoutes from './routes/authRoutes';
 
+dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();

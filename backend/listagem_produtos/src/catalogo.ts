@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import caixasRoutes from './routes/caixasRoutes';
 
+dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
