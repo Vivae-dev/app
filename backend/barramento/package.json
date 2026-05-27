@@ -1,25 +1,23 @@
 {
-  "name": "barramento_eventos",
+  "name": "barramento",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "type": "module",
+  "main": "barramento.ts",
   "scripts": {
-    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/index.ts\""
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/barramento.ts\""
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.16.1",
+    "concurrently": "^9.2.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ts-node-dev": "^2.0.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^25.9.1",
-    "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.3"
   }
 }

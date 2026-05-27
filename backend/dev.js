@@ -6,7 +6,7 @@ const services = [
   { name: 'catalogo', dir: 'listagem_produtos'  },
   { name: 'carrinho', dir: 'carrinho'           },
   { name: 'pagamento', dir: 'pagamento' },
-  { name: 'barramento', dir: 'barramento_eventos'},
+  { name: 'barramento', dir: 'barramento'},
 ];
 
 const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m',  '\x1b[35m', '\x1b[38;5;208m'];
