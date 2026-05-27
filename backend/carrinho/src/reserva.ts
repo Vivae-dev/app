@@ -5,10 +5,12 @@ import path from 'path';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
+dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
 const port = parseInt(process.env.RESERVA_PORT || '8003', 10);
+const host = process.env.HOST || 'localhost';
 
 const pool = new Pool({
 	host: process.env.DB_HOST,
@@ -55,7 +57,23 @@ const authenticate = (
 	}
 };
 
-// TODO: implementar GET /api/reservas para listar reservas do usuário autenticado
+app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
+	try {
+		const result = await pool.query(
+			`SELECT p.id_pedido, p.data_reserva, p.valor_total, p.estado,
+			        p.id_caixa, c.nome AS nome_experiencia, c.imagem
+			 FROM pedidos p
+			 LEFT JOIN caixas c ON c.id = p.id_caixa
+			 WHERE p.id_usuario = $1
+			 ORDER BY p.data_reserva DESC`,
+			[req.user!.id],
+		);
+		res.json(result.rows);
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ message: 'Erro ao buscar pedidos.' });
+	}
+});
 
 app.get('/api/health', (req, res) => {
 	res.json({
@@ -109,10 +127,10 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 		}
 
 		const pedidoResult = await pool.query(
-			`INSERT INTO pedidos (id_usuario, data_reserva, valor_total, estado)
-			 VALUES ($1, NOW(), $2, 'pago')
+			`INSERT INTO pedidos (id_usuario, data_reserva, valor_total, estado, id_caixa)
+			 VALUES ($1, NOW(), $2, 'pago', $3)
 			 RETURNING id_pedido, data_reserva`,
-			[req.user!.id, price],
+			[req.user!.id, price, experienceId],
 		);
 
 		const pedido = pedidoResult.rows[0];
@@ -135,6 +153,6 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	}
 });
 
-app.listen(port, () => {
-	console.log(`Microsserviço de Reservas rodando na porta ${port}`);
+app.listen(port, host, () => {
+	console.log(`Microsserviço de Reservas rodando em http://${host}:${port}`);
 });

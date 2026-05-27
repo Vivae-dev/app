@@ -1,55 +1,72 @@
 # Vivae - Backend (Monorepo de Microsserviços)
 
-Este repositório contém os microsserviços corporativos do Vivae utilizando Domain-Driven Design (Avançado) sob o framework Express, TypeScript e ferramentas concorrentes.
+Microsserviços Express + TypeScript sob Domain-Driven Design.
 
 ## Estrutura de Microsserviços
 
-Para organizar e isolar cada contexto do sistema, os microsserviços ficam isolados dentro de diretórios.
-
-- **Catálogo (`listagem_produtos/src/catalogo/`)**: Microsserviço de gerenciamento do CRUD de Caixas de Assinatura e Caixas Antigas (na porta 8001).
-- **Reservas (`carrinho/src/reserva.ts`)**: Microsserviço provisório para simular a tomada de reservas na porta 3002.
-
-_(Novos microsserviços como Auth, Payment e EventBus serão incorporados nesta estrutura corporativa em breve)_.
+| Serviço       | Diretório           | Porta |
+| ------------- | ------------------- | ----- |
+| Autenticação  | `autenticacao/`     | 8002  |
+| Catálogo      | `listagem_produtos/`| 8001  |
+| Carrinho      | `carrinho/`         | 8003  |
+| Pagamento     | `pagamento/`        | 8004  |
 
 ## Configuração de Ambiente
 
-Antes de rodar, é necessário apontar em qual porta cada microsserviço operará e qual será a rota de comunicação (CORS) com o Frontend.
+Cada serviço carrega dois arquivos `.env` em ordem de prioridade:
 
-Copie o `.env.example.<nome_da_pasta>` renomeando para `.env`:
+1. **Próprio** (`<serviço>/.env`) — porta do serviço
+2. **Raiz** (`backend/.env`) — vars compartilhadas (DB, JWT, SMTP, FRONT_URL)
 
-```bash
-cp .env.example.<nome_da_pasta> .env
-```
+### Estrutura dos `.env`
 
-## Como Rodar Localmente (Via Terminal Único)
+| Arquivo                       | Conteúdo                          |
+| ----------------------------- | --------------------------------- |
+| `backend/.env`                | DB, JWT_SECRET, SMTP, FRONT_URL   |
+| `autenticacao/.env`           | `AUTH_PORT=8002`                  |
+| `listagem_produtos/.env`      | `CATALOG_PORT=8001`               |
+| `carrinho/.env`               | `RESERVA_PORT=8003`               |
+| `pagamento/.env`              | `PAGAMENTO_PORT=8004`             |
 
-Instale as dependências pela primeira vez:
+### Primeiro uso
 
-```bash
-npm install
-```
-
-Este projeto utiliza a biblioteca `concurrently` para processar e compilar as portas de múltiplos microsserviços independentes usando apenas um único comando. No seu terminal, rode o comando abaixo: (morto)
-
-```bash
-npm run dev
-```
-
-Esse comando irá levantar o Catálogo (porta 8001) e as Reservas (porta 3002) simultaneamente.
-
-## Gerar a Build Final (TypeScript -> JavaScript)
+O `npm run setup` copia automaticamente todos os `.env.example` para `.env` (onde ainda não existam):
 
 ```bash
-npm run build
+npm run setup
 ```
 
-Todos os microsserviços serão compilados e minificados para a pasta `dist/` do sistema.
+Em seguida, edite `backend/.env` com as credenciais reais:
+
+```env
+JWT_SECRET=troque_este_segredo
+DB_HOST=seu_host.aivencloud.com
+DB_USER=avnadmin
+DB_PASSWORD=sua_senha_aqui
+DB_NAME=defaultdb
+DB_PORT=28717
+```
+
+Para gerar credenciais SMTP de teste (Ethereal):
+
+```bash
+node scripts/setup-ethereal.js
+```
+
+Cole os valores gerados no bloco SMTP do `backend/.env`.
+
+## Como Rodar
+
+```bash
+npm run setup   # copia .env.examples + instala deps (só na primeira vez)
+npm run dev     # sobe todos os serviços simultaneamente
+```
 
 ## Banco de Dados
 
-O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
+Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
-![alt text](image.png)
+---
 
 ## Rotas da API
 
@@ -57,7 +74,7 @@ O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
 
 | Método | Rota                         | Auth | Descrição                                      |
 | ------ | ---------------------------- | ---- | ---------------------------------------------- |
-| `GET`  | `/api/auth/health`           | —    | Status do serviço                              |
+| `GET`  | `/api/health`                | —    | Status do serviço                              |
 | `POST` | `/api/auth/register`         | —    | Cadastra usuário e envia e-mail de confirmação |
 | `POST` | `/api/auth/login`            | —    | Login; retorna JWT (conta deve estar ativa)    |
 | `GET`  | `/api/auth/confirmar/:token` | —    | Ativa conta pelo token recebido por e-mail     |
@@ -66,13 +83,13 @@ O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
 
 ```json
 {
-	"name": "string",
-	"email": "string",
-	"password": "string",
-	"cep": "string (opcional)",
-	"logradouro": "string (opcional)",
-	"numeroCasa": "string (opcional)",
-	"complemento": "string (opcional)"
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "cep": "string (opcional)",
+  "logradouro": "string (opcional)",
+  "numeroCasa": "string (opcional)",
+  "complemento": "string (opcional)"
 }
 ```
 
@@ -99,12 +116,12 @@ O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
 
 ```json
 {
-	"name": "string",
-	"description": "string (opcional)",
-	"type": "ASSINATURA | AVULSA",
-	"price": "number",
-	"image": "string (opcional)",
-	"stock": "number (opcional)"
+  "name": "string",
+  "description": "string (opcional)",
+  "type": "ASSINATURA | AVULSA",
+  "price": "number",
+  "image": "string (opcional)",
+  "stock": "number (opcional)"
 }
 ```
 
@@ -112,23 +129,71 @@ O banco de dados é sediado no Aiven, seguindo o seguinte modelo:
 
 ### Carrinho/Reservas — `http://localhost:8003`
 
-| Método | Rota            | Auth | Descrição         |
-| ------ | --------------- | ---- | ----------------- |
-| `GET`  | `/api/health`   | —    | Status do serviço |
-| `POST` | `/api/reservas` | JWT  | Cria reserva      |
+| Método | Rota                      | Auth | Descrição                         |
+| ------ | ------------------------- | ---- | --------------------------------- |
+| `GET`  | `/api/health`             | —    | Status do serviço                 |
+| `GET`  | `/api/reservas`           | JWT  | Lista pedidos do usuário logado   |
+| `POST` | `/api/reservas`           | JWT  | Cria reserva                      |
+| `GET`  | `/api/users/:id/address`  | JWT  | Retorna endereço salvo do usuário |
 
 **Body — `POST /api/reservas`**
 
 ```json
 {
-	"experienceId": "number",
-	"experienceName": "string",
-	"price": "number",
-	"address": {
-		"cep": "string",
-		"rua": "string",
-		"numero": "string",
-		"complemento": "string (opcional)"
-	}
+  "experienceId": "number",
+  "experienceName": "string",
+  "price": "number",
+  "address": {
+    "cep": "string",
+    "rua": "string",
+    "numero": "string",
+    "complemento": "string (opcional)"
+  }
+}
+```
+
+**Response — `GET /api/reservas`**
+
+```json
+[
+  {
+    "id_pedido": 1,
+    "data_reserva": "2025-05-25T00:00:00.000Z",
+    "valor_total": 149.9,
+    "estado": "pago"
+  }
+]
+```
+
+---
+
+### Pagamento (mock) — `http://localhost:8004`
+
+| Método | Rota            | Auth | Descrição                         |
+| ------ | --------------- | ---- | --------------------------------- |
+| `GET`  | `/api/health`   | —    | Status do serviço                 |
+| `POST` | `/api/pagamento`| —    | Processa pagamento (sempre aprova)|
+
+**Body — `POST /api/pagamento`**
+
+```json
+{
+  "amount": "number",
+  "cardNumber": "string",
+  "cardName": "string",
+  "cardExpiry": "string",
+  "cardCvv": "string"
+}
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "transactionId": "VIV-XXXXXXXX",
+  "amount": 149.9,
+  "last4": "1234",
+  "message": "Pagamento aprovado."
 }
 ```

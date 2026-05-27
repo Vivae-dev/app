@@ -7,7 +7,11 @@ export interface AuthRequest extends Request {
 	user?: { id: number; email: string; role: string };
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+): void => {
 	const token = req.headers.authorization?.split(' ')[1];
 
 	if (!token) {
@@ -28,7 +32,11 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
 	}
 };
 
-export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const requireAdmin = (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+): void => {
 	if (req.user?.role !== 'admin') {
 		res.status(403).json({ message: 'Acesso restrito a administradores.' });
 		return;

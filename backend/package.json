@@ -1,7 +1,8 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "scripts": {
-    "dev": "node dev.js"
-  }
+	"name": "backend",
+	"version": "1.0.0",
+	"scripts": {
+		"setup": "node setup.js",
+		"dev": "node dev.js"
+	}
 }
