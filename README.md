@@ -9,25 +9,22 @@
 
 # Vivae
 
-Este é um serviço que vende experiências.
+Serviço que vende experiências em caixas de assinatura e avulsas.
 
-Este projeto é composto por um backend em Express (TypeScript) e um frontend em React (Vite).
+Arquitetura: backend Express (TypeScript) em microsserviços + frontend React (Vite).
 
-### 1. Inicie o servidor Backend
+## Como Rodar
 
-Abra um terminal e navegue até o diretório `backend`:
+### Backend
 
 ```bash
 cd backend
-npm install
-npm run dev
+npm run setup   # copia .env.examples + instala deps de cada serviço (só na primeira vez)
+# edite backend/.env com suas credenciais
+npm run dev     # sobe todos os microsserviços simultaneamente
 ```
 
-A API do backend iniciará em `http://localhost:3001`.
-
-### 2. Inicie o servidor Frontend
-
-Abra um segundo terminal e navegue até o diretório `frontend`:
+### Frontend
 
 ```bash
 cd frontend
@@ -35,7 +32,7 @@ npm install
 npm run dev
 ```
 
-O frontend do Vivae estará disponível em [http://localhost:8000](http://localhost:8000)
+Disponível em [http://localhost:8000](http://localhost:8000)
 
 ---
 
@@ -47,10 +44,21 @@ O frontend do Vivae estará disponível em [http://localhost:8000](http://localh
 | Catálogo de Produtos | 8001  |
 | Autenticação         | 8002  |
 | Carrinho/Reservas    | 8003  |
+| Pagamento (mock)     | 8004  |
+
+---
 
 ## Configuração de E-mail (SMTP)
 
-Preencha as variáveis em `backend/autenticacao/.env`:
+Para desenvolvimento, use o [Ethereal Email](https://ethereal.email) (fake SMTP, zero configuração):
+
+```bash
+node backend/scripts/setup-ethereal.js
+```
+
+O script cria uma conta de teste e imprime as variáveis SMTP para colar em `backend/.env`.
+
+Para produção, preencha manualmente:
 
 ```env
 SMTP_HOST=smtp.seuservidor.com
@@ -62,14 +70,17 @@ SMTP_FROM=noreply@vivae.com
 AUTH_BASE_URL=http://localhost:8002
 ```
 
+---
+
 ## TODOs Pendentes
 
-- [ ] `carrinho/reserva.ts` — persistir reservas no banco (tabela `pedidos`)
-- [ ] `carrinho/reserva.ts` — implementar `GET /api/users/:id/address` (frontend já chama)
+- [x] `carrinho/reserva.ts` — persistir reservas no banco (tabela `pedidos`)
+- [x] `carrinho/reserva.ts` — implementar `GET /api/reservas` (listar pedidos do usuário)
+- [x] `carrinho/reserva.ts` — implementar `GET /api/users/:id/address`
+- [x] `App.tsx` — acompanhamento de pedidos (view "Meus Pedidos")
+- [x] `App.tsx` — fluxo de pagamento mock (checkout-payment)
 - [ ] `authController.ts` — adicionar coluna `token_expiry` e checar expiração do token de confirmação
 - [ ] `authController.ts` — endpoint `POST /api/auth/reenviar-confirmacao`
-- [ ] `caixasController.ts` — proteger rotas de escrita com middleware de admin
 - [ ] `App.tsx` — fluxo pós-cadastro: mostrar "verifique seu e-mail" em vez de tentar logar
-- [x] `App.tsx` — adicionar campo `numeroCasa` no formulário de cadastro
 - [ ] `App.tsx` — página `/confirmar/:token` para ativar conta pelo link do e-mail
 - [ ] `App.tsx` — quebrar em componentes (AuthModal, ProductCard, CheckoutFlow, AdminPanel)

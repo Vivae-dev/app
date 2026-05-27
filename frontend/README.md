@@ -1,34 +1,47 @@
 # Vivae - Frontend (React + Vite)
 
-Este é o aplicativo React do Vivae, construído com foco em uma UI moderna e premium (Glassmorphism), conectando-se na nossa arquitetura de microsserviços do backend.
+UI glassmorphism conectada aos microsserviços do backend.
 
-## Configuração do Workspace
+## Configuração
 
-1. Como este projeto consome os microsserviços do Backend, é necessário definir o caminho de cada um nas variáveis de ambiente.
-2. Copie o arquivo `.env.example` criando um novo `.env`:
+Copie `.env.example` para `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-3. O frontend automaticamente usará a porta 8000 restrita (`http://localhost:8000`).
+Variáveis disponíveis:
 
-## Como rodar o projeto
+```env
+VITE_CATALOGO_URI=http://localhost:8001
+VITE_AUTH_URI=http://localhost:8002
+VITE_RESERVA_URI=http://localhost:8003
+VITE_PAGAMENTO_URI=http://localhost:8004
+```
 
-Instale as dependências uma vez:
+## Como Rodar
 
 ```bash
 npm install
-```
-
-Inicie o servidor de desenvolvimento:
-
-```bash
 npm run dev
 ```
 
-## Como compilar para Produção
+Disponível em [http://localhost:8000](http://localhost:8000)
+
+## Build de Produção
 
 ```bash
 npm run build
 ```
+
+## Fluxo de Compra
+
+1. Catálogo → selecionar caixa
+2. Checkout — endereço de entrega
+3. Confirmação do pedido
+4. Pagamento com cartão (mock)
+5. Reserva criada → toast de confirmação
+
+## Acompanhamento de Pedidos
+
+Usuários logados acessam "Meus Pedidos" no menu para ver histórico com status em tempo real.
