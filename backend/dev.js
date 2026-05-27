@@ -5,9 +5,10 @@ const services = [
   { name: 'auth',     dir: 'autenticacao'      },
   { name: 'catalogo', dir: 'listagem_produtos'  },
   { name: 'carrinho', dir: 'carrinho'           },
+  { name: 'barramento', dir: 'barramento_eventos'},
 ];
 
-const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m'];
+const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m', '\x1b[38;5;208m'];
 const reset = '\x1b[0m';
 
 services.forEach(({ name, dir }, i) => {
