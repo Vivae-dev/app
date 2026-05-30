@@ -58,6 +58,7 @@ export const CaixasController = {
 			res.status(201).json(toBox(result.rows[0]));
 		} catch (err) {
 			res.status(500).json({ message: 'Erro ao criar caixa.' });
+			console.log(err);
 		}
 	},
 

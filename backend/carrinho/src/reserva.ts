@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import axios from 'axios';
 import dotenv from 'dotenv';
 import path from 'path';
 import jwt from 'jsonwebtoken';
@@ -59,6 +60,13 @@ const authenticate = (
 
 app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	try {
+	/*	const caixa = await axios.post("http://localhost:10000/eventos", {
+			tipo: "GetCaixa",
+			dados : {
+				id_usuario : req.user!.id,
+			}
+		});
+		console.log(' '+ caixa); */
 		const result = await pool.query(
 			`SELECT p.id_pedido, p.data_reserva, p.valor_total, p.estado,
 			        p.id_caixa, c.nome AS nome_experiencia, c.imagem

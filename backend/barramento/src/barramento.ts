@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import axios from 'axios';
+const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -9,34 +10,17 @@ app.use(express.json());
 
 const events: any[] = [];
 
-// Recebe evento
-app.post('/events', async (req: Request, res: Response) => {
-  const event = req.body;
+app.use(bodyParser.json());
 
-  events.push(event);
-
-  try {
-    // Serviço de posts
-    await axios.post('http://localhost:8001/events', event);
-
-    // Serviço de comentários
-    await axios.post('http://localhost:8002/events', event);
-
-    // Serviço de consultas
-    await axios.post('http://localhost:8003/events', event);
-
-  } catch (error) {
-    console.log('Erro ao enviar evento:', error);
-  }
-
-  res.status(200).send({ status: 'OK' });
+app.post('/eventos', (req, res) => {
+    const evento = req.body;
+    //envia o evento para o microsserviço de lembretes
+    axios.post('http://localhost:4000/eventos', evento);
+    //envia o evento para o microsserviço de observações
+    axios.post('http://localhost:5000/eventos', evento);
+    res.status(200).send({ msg: "ok" });
 });
 
-// Histórico de eventos
-app.get('/events', (req: Request, res: Response) => {
-  res.send(events);
-});
-
-app.listen(9000, () => {
-  console.log('Event Bus rodando na porta 9000');
-});
+app.listen(10000, () => {
+    console.log('Barramento de eventos. Porta 10000.')
+ })
