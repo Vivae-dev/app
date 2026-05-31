@@ -58,3 +58,16 @@ CREATE TABLE IF NOT EXISTS itensPedido (
     FOREIGN KEY (id_produto) REFERENCES produtos(id_produto),
     PRIMARY KEY (id_pedido, id_produto)
 );
+
+/* MS ASSINATURA */
+
+CREATE TYPE status_assinatura AS ENUM ('ativa', 'cancelada', 'suspensa');
+
+CREATE TABLE IF NOT EXISTS assinaturas (
+    id_assinatura SERIAL NOT NULL PRIMARY KEY,
+    id_usuario INT,
+    experience_id INT,
+    data_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status status_assinatura DEFAULT 'ativa',
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+);
