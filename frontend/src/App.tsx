@@ -38,6 +38,9 @@ function App() {
 
 	const [selectedBox, setSelectedBox] = useState<Box | null>(null);
 
+	// Estados de cancelameto
+	const [minhasReservas, setMinhasReservas] = useState<any[]>([]);
+
 	// Dados de Endereço
 	const [cep, setCep] = useState('');
 	const [rua, setRua] = useState('');
@@ -45,7 +48,7 @@ function App() {
 	const [complemento, setComplemento] = useState('');
 
 	// Controle de Telas
-	const [currentView, setCurrentView] = useState<'catalog' | 'checkout-address' | 'checkout-confirm' | 'admin'>('catalog');
+	const [currentView, setCurrentView] = useState<'catalog' | 'checkout-address' | 'checkout-confirm' | 'admin' | 'minhas-reservas'>('catalog');
 
 	// Admin
 	const [adminEditBox, setAdminEditBox] = useState<Box | null>(null);
@@ -90,6 +93,37 @@ function App() {
 			setAdminLoading(false);
 		}
 	};
+
+	// Lógica de Cancelamento
+const carregarMinhasReservas = async () => {
+    if (!currentUser) return;
+    try {
+        const res = await axios.get(`${reservaUrl}/api/reservas/usuario/${currentUser.id}`, authHeaders());
+        setMinhasReservas(res.data);
+    } catch (error) {
+        console.error("Erro ao buscar reservas:", error);
+    }
+};
+
+const handleCancelarReserva = async (reservaId: number) => {
+    if (!window.confirm('Tem certeza que deseja cancelar esta reserva/assinatura permanentemente?')) return;
+    
+    try {
+        await axios.delete(`${reservaUrl}/api/reservas/${reservaId}`, authHeaders());
+        
+        showToast('✅ Reserva cancelada com sucesso!');
+        
+        setMinhasReservas((prev) => prev.filter((r) => r.id !== reservaId));
+    } catch (error: any) {
+        showToast(`❌ Erro ao cancelar: ${error.response?.data?.message || 'Erro interno'}`);
+    }
+};
+
+useEffect(() => {
+    if (currentView === 'minhas-reservas') {
+        carregarMinhasReservas();
+    }
+}, [currentView]);
 
 	const handleAdminDelete = async (id: number) => {
 		if (!window.confirm('Deletar esta caixa permanentemente?')) return;
@@ -282,6 +316,16 @@ function App() {
 					{currentUser ? (
 						<>
 							<span style={{ color: '#94a3b8' }}>Olá, {currentUser.name}</span>
+
+							{/* Botão para abrir Minhas reservas */}
+							<button
+								className="auth-button"
+								onClick={() => setCurrentView('minhas-reservas')}
+								style={{ background: '#3b82f6', marginRight: '0.5rem' }}
+								>
+									Minhas Reservas
+								</button>
+
 							{currentUser.role === 'admin' && (
 								<button
 									className="auth-button"
@@ -512,6 +556,45 @@ function App() {
                         </button>
                     </div>
                 )}
+
+				{/* Tela de Listagem e Cancelamento de Reservas */}
+    			{currentView === 'minhas-reservas' && (
+					<div className="checkout-view">
+						<button className="back-button" onClick={() => setCurrentView('catalog')}>
+							Voltar para a vitrine
+						</button>
+
+						<h2>Minhas Assinaturas</h2>
+						<p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
+							Aqui você pode gerenciar e cancelar seus pedidos ativos.
+						</p>
+
+						{minhasReservas.length === 0 ? (
+							<p style={{ textAlign: 'center', color: '#64748b' }}>Você não possui nenhuma reserva ativa no momento.</p>
+            			) : (
+							<div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+								{minhasReservas.map((reserva) => (
+									<div key={reserva.id} className="summary-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem' }}>
+										<div>
+											<p style={{ margin: 0 }}><strong>Item:</strong> {reserva.experienceName}</p>
+											<p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>
+												<strong>Valor:</strong> {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(reserva.price)}
+											</p>
+										</div>
+										<button
+											onClick={() => handleCancelarReserva(reserva.id)}
+											className="buy-button"
+											style={{ background: '#ef4444', width: 'auto', padding: '0.5rem 1rem', margin: 0 }}
+										>
+											Cancelar
+										</button>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
 			</main>
 
 			{currentView === 'admin' && (
