@@ -1618,7 +1618,7 @@ function App() {
 
       {/* Views */}
       {currentView === "catalog" && (
-        <main>
+        <main className="main-content">
           {loading ? (
             <div className="product-grid">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -1690,7 +1690,7 @@ function App() {
       )}
 
       {currentView === "admin" && (
-        <div className="checkout-view">
+        <div className="admin-view">
           <button
             className="back-button"
             onClick={() => setCurrentView("catalog")}
