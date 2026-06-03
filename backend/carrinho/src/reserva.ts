@@ -6,7 +6,7 @@ import path from 'path';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../.env'),  override: true });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
@@ -28,6 +28,32 @@ app.use(
 	}),
 );
 app.use(express.json());
+
+const funcoesDoBarramento = {
+  RespostaCaixa: async (caixa : any[]) => {
+		try {
+			for (let i = 0; i < caixa.length; i++) {
+				await pool.query(
+				`
+				INSERT INTO caixas_cache (
+					id,
+					nome,
+					imagem
+				)
+				VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING
+				`,
+				[
+					caixa[i].id,
+					caixa[i].nome,
+					caixa[i].imagem
+				]
+			);}
+			
+		} catch (err) {
+			console.error(err);
+		}
+	}
+};
 
 interface AuthRequest extends Request {
 	user?: { id: number; email: string; role: string };
@@ -58,25 +84,40 @@ const authenticate = (
 	}
 };
 
+
+//Recebe os eventos e redireciona para o funções do barramento, que separa pelo tipo e executa a função correspondente
+app.post("/api/eventos", async (req, res) => {
+	try{
+		const tipo = req.body.tipo as keyof typeof funcoesDoBarramento;
+		await funcoesDoBarramento[tipo](req.body.dados);
+		res.status(200).send({ msg: "ok" });
+	} catch (err){
+		res.status(200).send({ msg: "ok" });
+	}
+});
+
+
 app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	try {
-	/*	const caixa = await axios.post("http://localhost:10000/eventos", {
-			tipo: "GetCaixa",
-			dados : {
-				id_usuario : req.user!.id,
-			}
+
+		const aux = await pool.query('SELECT id_caixa FROM pedidos WHERE id_usuario = $1 ORDER BY data_reserva DESC', [req.user!.id],);
+
+		const infosCaixa = await axios.post("http://localhost:10000/eventos", {
+			tipo: "GetPedidos",
+			dados : aux.rows
 		});
-		console.log(' '+ caixa); */
+
 		const result = await pool.query(
-			`SELECT p.id_pedido, p.data_reserva, p.valor_total, p.estado,
-			        p.id_caixa, c.nome AS nome_experiencia, c.imagem
+			`SELECT id_pedido, data_reserva, valor_total, estado,
+			        id_caixa, c.nome AS nome_experiencia, c.imagem
 			 FROM pedidos p
-			 LEFT JOIN caixas c ON c.id = p.id_caixa
+			 LEFT JOIN caixas_cache c ON c.id = p.id_caixa
 			 WHERE p.id_usuario = $1
 			 ORDER BY p.data_reserva DESC`,
 			[req.user!.id],
 		);
 		res.json(result.rows);
+
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: 'Erro ao buscar pedidos.' });
