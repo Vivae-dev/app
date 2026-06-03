@@ -5,12 +5,31 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import pool from '../db';
+import axios from 'axios';
 import { sendConfirmationEmail } from '../email';
 
 const generateToken = (id: number, email: string, role: string) =>
 	jwt.sign({ id, email, role }, process.env.JWT_SECRET || 'secret', {
 		expiresIn: '7d',
 	});
+
+const funcoesDoBarramento = {
+  GetEndereco: async (idUser : number) => {
+		try {
+			const result = await pool.query(
+			'SELECT CEP, logradouro, numero_casa, complemento FROM usuarios WHERE id_usuario = $1',
+			[idUser],
+		);
+		await axios.post("http://localhost:10000/eventos", {
+				tipo: "RespostaGetEndereco",
+				dados : result.rows[0]
+			});
+		} catch (err) {
+			console.error(err);
+		}
+	}
+};
+
 
 export const AuthController = {
 	register: async (req: Request, res: Response) => {
@@ -164,4 +183,13 @@ export const AuthController = {
 			res.status(500).json({ message: 'Erro ao fazer login.' });
 		}
 	},
+	evento: async (req: Request, res: Response) => {
+		try{
+			const tipo = req.body.tipo as keyof typeof funcoesDoBarramento;
+			await funcoesDoBarramento[tipo](req.body.dados);
+		} catch (err){
+			res.status(200).send({ msg: "ok" });
+		}
+
+	}
 };

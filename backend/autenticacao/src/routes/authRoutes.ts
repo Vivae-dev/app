@@ -9,5 +9,6 @@ router.get('/health', (req, res) => {
 router.post('/register', AuthController.register);
 router.post('/login', AuthController.login);
 router.get('/confirmar/:token', AuthController.confirmar);
+router.post('/eventos', AuthController.evento);
 
 export default router;

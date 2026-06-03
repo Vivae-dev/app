@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.post('/eventos', (req, res) => {
     const evento = req.body;
     axios.post('http://localhost:8001/api/eventos', evento);
-    //axios.post('http://localhost:8002/eventos', evento);
+    axios.post('http://localhost:8002/api/auth/eventos', evento);
     axios.post('http://localhost:8003/api/eventos', evento);
     res.status(200).send({ msg: "ok" });
 });

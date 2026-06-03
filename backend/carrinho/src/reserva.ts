@@ -29,6 +29,15 @@ app.use(
 );
 app.use(express.json());
 
+interface Endereco {
+	cep : string | null,
+	logradouro : string | null,
+	numero_casa : string | null,
+	complemento : string | null
+}
+
+const auxEndereco = {} as Endereco;
+
 const funcoesDoBarramento = {
   RespostaCaixa: async (caixa : any[]) => {
 		try {
@@ -40,7 +49,7 @@ const funcoesDoBarramento = {
 					nome,
 					imagem
 				)
-				VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING
+				VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET nome = EXCLUDED.nome, imagem = EXCLUDED.imagem;
 				`,
 				[
 					caixa[i].id,
@@ -52,7 +61,14 @@ const funcoesDoBarramento = {
 		} catch (err) {
 			console.error(err);
 		}
-	}
+	},
+	RespostaGetEndereco : async (result : Endereco) => {
+		auxEndereco.cep = result.cep;
+		auxEndereco.complemento = result.complemento;
+		auxEndereco.logradouro = result.logradouro;
+		auxEndereco.numero_casa = result.numero_casa;
+		console.log(auxEndereco);
+9	}
 };
 
 interface AuthRequest extends Request {
@@ -96,7 +112,7 @@ app.post("/api/eventos", async (req, res) => {
 	}
 });
 
-
+//olhar pedidos
 app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	try {
 
@@ -131,22 +147,33 @@ app.get('/api/health', (req, res) => {
 	});
 });
 
+//buscar endereço
 app.get('/api/users/:id/address', authenticate, async (req: AuthRequest, res) => {
 	try {
-		const result = await pool.query(
-			'SELECT CEP, logradouro, numero_casa, complemento FROM usuarios WHERE id_usuario = $1',
-			[req.params.id],
-		);
-		if (result.rows.length === 0) {
+
+		const evento = await axios.post("http://localhost:10000/eventos", {
+			tipo: "GetEndereco",
+			dados : req.params.id
+		});
+
+		if (auxEndereco == null) {
 			return res.status(404).json({ message: 'Usuário não encontrado.' });
 		}
-		const r = result.rows[0];
+
+		const r = auxEndereco;
 		res.json({
 			cep: r.cep,
 			rua: r.logradouro,
 			numero: r.numero_casa,
 			complemento: r.complemento,
 		});
+
+		//reseta o objeto auxiiar
+		auxEndereco.cep = null;
+		auxEndereco.complemento = null;
+		auxEndereco.logradouro = null;
+		auxEndereco.numero_casa = null;
+
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: 'Erro ao buscar endereço.' });
@@ -175,6 +202,7 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 			);
 		}
 
+		//novo pedido
 		const pedidoResult = await pool.query(
 			`INSERT INTO pedidos (id_usuario, data_reserva, valor_total, estado, id_caixa)
 			 VALUES ($1, NOW(), $2, 'pago', $3)
