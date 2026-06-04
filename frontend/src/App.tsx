@@ -1441,7 +1441,7 @@ function App() {
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
       showToast(
-        `✅ Pedido de ${selectedBox.name} realizado! ID: ${payRes.data.transactionId}`,
+        `✅ Pedido de ${selectedBox.name} realizado! ID: ${payRes.transactionId}`,
       );
 
       // Reset checkout state
