@@ -153,6 +153,26 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	}
 });
 
+app.delete('/api/reservas/:id', authenticate, async (req: AuthRequest, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            'DELETE FROM pedidos WHERE id_pedido = $1 AND id_usuario = $2 RETURNING id_pedido',
+            [id, req.user!.id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Pedido não encontrado ou você não tem permissão para cancelá-lo.' });
+        }
+
+        res.json({ message: 'Pedido cancelado com sucesso!' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erro ao cancelar o pedido.' });
+    }
+});
+
 app.listen(port, host, () => {
 	console.log(`Microsserviço de Reservas rodando em http://${host}:${port}`);
 });

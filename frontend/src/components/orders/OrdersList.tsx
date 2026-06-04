@@ -11,12 +11,14 @@ interface OrdersListProps {
   orders: Order[];
   ordersLoading: boolean;
   onBack: () => void;
+  onCancelOrder: (id: number) => void;
 }
 
 export default function OrdersList({
   orders,
   ordersLoading,
   onBack,
+  onCancelOrder,
 }: OrdersListProps) {
   return (
     <div className="checkout-view">
@@ -66,6 +68,8 @@ export default function OrdersList({
                   alignItems: "center",
                   gap: "1rem",
                 }}
+
+                
               >
                 {o.imagem && (
                   <img
@@ -124,6 +128,24 @@ export default function OrdersList({
                     }).format(o.valor_total)}
                   </p>
                 </div>
+
+                <button
+                  onClick={() => onCancelOrder(o.id_pedido)}
+                  style={{
+                    background: "#ef4444",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "0.4rem 0.8rem",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "0.75rem",
+                    fontWeight: "bold",
+                    flexShrink: 0,
+                  }}
+                >
+                  Cancelar
+                </button>
+                
               </div>
 
               {(() => {

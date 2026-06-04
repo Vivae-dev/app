@@ -30,10 +30,23 @@ export function useOrders() {
     }
   };
 
+  const cancelOrder = async (id: number, token: string) => {
+    try {
+      await reservasService.cancelReserva(id, token);
+
+      setOrders((prevOrders) => prevOrders.filter((order) => order.id_pedido !== id));
+      
+    } catch (error) {
+      console.error("Erro ao cancelar pedido", error);
+      throw error;
+    }
+  };
+
   return {
     orders,
     ordersLoading,
     fetchOrders,
     setOrders,
+    cancelOrder,
   };
 }

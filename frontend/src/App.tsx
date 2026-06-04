@@ -1233,7 +1233,7 @@ function App() {
   // Global hooks
   const { toasts, showToast } = useToast();
   const { currentUser, setCurrentUser, login, register, logout } = useAuth();
-  const { orders, ordersLoading, fetchOrders } = useOrders();
+  const { orders, ordersLoading, fetchOrders, cancelOrder } = useOrders();
 
   // Catalog
   const [boxes, setBoxes] = useState<Box[]>([]);
@@ -1490,6 +1490,20 @@ function App() {
     }
   };
 
+  const handleCancelOrder = async (id: number) => {
+    // Confirmação de segurança
+    if (!window.confirm("Tem certeza que deseja cancelar este pedido?")) return;
+
+    try {
+      await cancelOrder(id, currentUser!.token);
+      showToast("✅ Pedido cancelado com sucesso!");
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.message || "O servidor de reservas pode estar offline.";
+      showToast(`❌ Erro ao cancelar: ${msg}`);
+    }
+  };
+
   // Admin
 
   const handleAdminFormChange = (field: string, value: string | number) => {
@@ -1686,6 +1700,7 @@ function App() {
           orders={orders}
           ordersLoading={ordersLoading}
           onBack={() => setCurrentView("catalog")}
+          onCancelOrder={handleCancelOrder}
         />
       )}
 
