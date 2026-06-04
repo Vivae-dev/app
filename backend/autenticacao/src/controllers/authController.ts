@@ -13,6 +13,7 @@ const generateToken = (id: number, email: string, role: string) =>
 		expiresIn: '7d',
 	});
 
+
 const funcoesDoBarramento = {
   GetEndereco: async (idUser : number) => {
 		try {
@@ -27,6 +28,19 @@ const funcoesDoBarramento = {
 		} catch (err) {
 			console.error(err);
 		}
+	},
+	SetEndereco : async (dados : any[]) => {
+		await pool.query(
+				`UPDATE usuarios SET CEP = $1, logradouro = $2, numero_casa = $3, complemento = $4
+				 WHERE id_usuario = $5`,
+				[
+					dados[0].cep ?? null,
+					dados[0].rua ?? null,
+					dados[0].numero ?? null,
+					dados[0].complemento ?? null,
+					dados[1],
+				],
+			);
 	}
 };
 

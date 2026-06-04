@@ -189,17 +189,10 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 
 	try {
 		if (address) {
-			await pool.query(
-				`UPDATE usuarios SET CEP = $1, logradouro = $2, numero_casa = $3, complemento = $4
-				 WHERE id_usuario = $5`,
-				[
-					address.cep ?? null,
-					address.rua ?? null,
-					address.numero ?? null,
-					address.complemento ?? null,
-					req.user!.id,
-				],
-			);
+		const evento = await axios.post("http://localhost:10000/eventos", {
+			tipo: "SetEndereco",
+			dados : [address, req.user!.id]
+		});
 		}
 
 		//novo pedido
