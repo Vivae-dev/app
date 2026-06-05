@@ -37,6 +37,7 @@ interface Endereco {
 }
 
 const auxEndereco = {} as Endereco;
+let esperar : boolean = false;
 
 const funcoesDoBarramento = {
   RespostaCaixa: async (caixa : any[]) => {
@@ -57,7 +58,7 @@ const funcoesDoBarramento = {
 					caixa[i].imagem
 				]
 			);}
-			
+			esperar = true;
 		} catch (err) {
 			console.error(err);
 		}
@@ -67,8 +68,7 @@ const funcoesDoBarramento = {
 		auxEndereco.complemento = result.complemento;
 		auxEndereco.logradouro = result.logradouro;
 		auxEndereco.numero_casa = result.numero_casa;
-		console.log(auxEndereco);
-9	}
+	}
 };
 
 interface AuthRequest extends Request {
@@ -101,6 +101,14 @@ const authenticate = (
 };
 
 
+
+const espera = async (): Promise<void> => {
+    while (esperar == false){
+		console.log('esperando true');
+	}
+	console.log('saiu do while');
+};
+
 //Recebe os eventos e redireciona para o funções do barramento, que separa pelo tipo e executa a função correspondente
 app.post("/api/eventos", async (req, res) => {
 	try{
@@ -110,7 +118,7 @@ app.post("/api/eventos", async (req, res) => {
 	} catch (err){
 		res.status(200).send({ msg: "ok" });
 	}
-});
+}); 
 
 //olhar pedidos
 app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
@@ -118,10 +126,12 @@ app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 
 		const aux = await pool.query('SELECT id_caixa FROM pedidos WHERE id_usuario = $1 ORDER BY data_reserva DESC', [req.user!.id],);
 
-		const infosCaixa = await axios.post("http://localhost:10000/eventos", {
+		await axios.post("http://localhost:10000/eventos", {
 			tipo: "GetPedidos",
 			dados : aux.rows
 		});
+
+		await espera;
 
 		const result = await pool.query(
 			`SELECT id_pedido, data_reserva, valor_total, estado,
@@ -133,7 +143,7 @@ app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 			[req.user!.id],
 		);
 		res.json(result.rows);
-
+		esperar = false;
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: 'Erro ao buscar pedidos.' });

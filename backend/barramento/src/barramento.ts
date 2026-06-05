@@ -15,7 +15,7 @@ app.post('/eventos', (req, res) => {
     axios.post('http://localhost:8001/api/eventos', evento);
     axios.post('http://localhost:8002/api/auth/eventos', evento);
     axios.post('http://localhost:8003/api/eventos', evento);
-    res.status(200).send({ msg: "ok" });
+   res.status(200).send({ msg: "ok" });
 });
 
 app.listen(10000, () => {
