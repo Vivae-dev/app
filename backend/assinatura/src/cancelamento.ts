@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
+import axios from 'axios';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -62,14 +63,15 @@ app.delete('/api/cancelamento/:id', authenticate, async (req: AuthRequest, res) 
     try {
         const { id } = req.params;
 
-        const result = await pool.query(
-            'DELETE FROM pedidos WHERE id_pedido = $1 AND id_usuario = $2 RETURNING id_pedido',
-            [id, req.user!.id]
-        );
-
+        await axios.post("http://localhost:10000/eventos", {
+			tipo: "CancelarPedido",
+			dados : [id, req.user!.id]
+		});
+        
+        /*
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Pedido não encontrado ou você não tem permissão para cancelá-lo.' });
-        }
+        } */
 
         res.json({ message: 'Pedido cancelado com sucesso!' });
     } catch (err) {

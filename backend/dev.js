@@ -10,7 +10,7 @@ const services = [
   { name: 'barramento', dir: 'barramento'},
 ];
 
-const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m',  '\x1b[35m', '\x1b[36m', '\x1b[38;5;208m'];
+const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m',  '\x1b[35m', '\x1b[31m', '\x1b[38;5;208m'];
 const reset = '\x1b[0m';
 
 services.forEach(({ name, dir }, i) => {

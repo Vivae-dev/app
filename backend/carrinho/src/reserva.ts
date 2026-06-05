@@ -68,6 +68,12 @@ const funcoesDoBarramento = {
 		auxEndereco.complemento = result.complemento;
 		auxEndereco.logradouro = result.logradouro;
 		auxEndereco.numero_casa = result.numero_casa;
+	},
+	CancelarPedido : async (ids : any[] ) => {
+		 const result = await pool.query(
+            'DELETE FROM pedidos WHERE id_pedido = $1 AND id_usuario = $2 RETURNING id_pedido',
+            [ids[0], ids[1]]
+        );
 	}
 };
 
