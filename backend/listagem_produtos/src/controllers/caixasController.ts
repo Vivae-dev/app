@@ -1,5 +1,12 @@
-import { Request, Response } from 'express';
+import express, { Request, Response } from 'express';
+import axios from 'axios';
 import pool from '../db';
+import cors from 'cors';
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
 
 const toBox = (r: any) => ({
 	id: r.id,
@@ -10,6 +17,36 @@ const toBox = (r: any) => ({
 	image: r.imagem,
 	stock: r.estoque,
 });
+
+interface caixaInfos{
+	id : number,
+	nome: string,
+	imagem : string
+}
+
+const caixas: caixaInfos[] = [];
+
+const funcoesDoBarramento = {
+  GetPedidos: async (ids_caixas : any[]) => {
+		try {
+			for (let i = 0; i < ids_caixas.length; i++) {
+				const result = await pool.query('SELECT nome, imagem FROM caixas WHERE id = $1', [
+				ids_caixas[i].id_caixa,
+			]);
+			if (result.rows.length > 0) {
+                    caixas.push({
+						id : ids_caixas[i].id_caixa,
+                        nome: result.rows[0].nome,
+                        imagem: result.rows[0].imagem
+                    });
+            }
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	}
+};
+
 
 export const CaixasController = {
 	async getAll(req: Request, res: Response) {
@@ -58,6 +95,7 @@ export const CaixasController = {
 			res.status(201).json(toBox(result.rows[0]));
 		} catch (err) {
 			res.status(500).json({ message: 'Erro ao criar caixa.' });
+			console.log(err);
 		}
 	},
 
@@ -104,4 +142,18 @@ export const CaixasController = {
 			res.status(500).json({ message: 'Erro ao deletar caixa.' });
 		}
 	},
+
+	async evento(req: Request, res: Response){
+		try{
+			const tipo = req.body.tipo as keyof typeof funcoesDoBarramento;
+			await funcoesDoBarramento[tipo](req.body.dados);
+			await axios.post("http://localhost:10000/eventos", {
+				tipo: "RespostaCaixa",
+				dados : caixas
+			});
+		} catch (err){
+			res.status(200).send({ msg: "ok" });
+		}
+
+	}
 };

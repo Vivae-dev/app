@@ -1,11 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import axios from 'axios';
 import dotenv from 'dotenv';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../.env'),  override: true });
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const app = express();
@@ -27,6 +28,48 @@ app.use(
 	}),
 );
 app.use(express.json());
+
+interface Endereco {
+	cep : string | null,
+	logradouro : string | null,
+	numero_casa : string | null,
+	complemento : string | null
+}
+
+const auxEndereco = {} as Endereco;
+let esperar : boolean = false;
+
+const funcoesDoBarramento = {
+  RespostaCaixa: async (caixa : any[]) => {
+		try {
+			for (let i = 0; i < caixa.length; i++) {
+				await pool.query(
+				`
+				INSERT INTO caixas_cache (
+					id,
+					nome,
+					imagem
+				)
+				VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET nome = EXCLUDED.nome, imagem = EXCLUDED.imagem;
+				`,
+				[
+					caixa[i].id,
+					caixa[i].nome,
+					caixa[i].imagem
+				]
+			);}
+			esperar = true;
+		} catch (err) {
+			console.error(err);
+		}
+	},
+	RespostaGetEndereco : async (result : Endereco) => {
+		auxEndereco.cep = result.cep;
+		auxEndereco.complemento = result.complemento;
+		auxEndereco.logradouro = result.logradouro;
+		auxEndereco.numero_casa = result.numero_casa;
+	}
+};
 
 interface AuthRequest extends Request {
 	user?: { id: number; email: string; role: string };
@@ -57,18 +100,50 @@ const authenticate = (
 	}
 };
 
+
+
+const espera = async (): Promise<void> => {
+    while (esperar == false){
+		console.log('esperando true');
+	}
+	console.log('saiu do while');
+};
+
+//Recebe os eventos e redireciona para o funções do barramento, que separa pelo tipo e executa a função correspondente
+app.post("/api/eventos", async (req, res) => {
+	try{
+		const tipo = req.body.tipo as keyof typeof funcoesDoBarramento;
+		await funcoesDoBarramento[tipo](req.body.dados);
+		res.status(200).send({ msg: "ok" });
+	} catch (err){
+		res.status(200).send({ msg: "ok" });
+	}
+}); 
+
+//olhar pedidos
 app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 	try {
+
+		const aux = await pool.query('SELECT id_caixa FROM pedidos WHERE id_usuario = $1 ORDER BY data_reserva DESC', [req.user!.id],);
+
+		await axios.post("http://localhost:10000/eventos", {
+			tipo: "GetPedidos",
+			dados : aux.rows
+		});
+
+		await espera;
+
 		const result = await pool.query(
-			`SELECT p.id_pedido, p.data_reserva, p.valor_total, p.estado,
-			        p.id_caixa, c.nome AS nome_experiencia, c.imagem
+			`SELECT id_pedido, data_reserva, valor_total, estado,
+			        id_caixa, c.nome AS nome_experiencia, c.imagem
 			 FROM pedidos p
-			 LEFT JOIN caixas c ON c.id = p.id_caixa
+			 LEFT JOIN caixas_cache c ON c.id = p.id_caixa
 			 WHERE p.id_usuario = $1
 			 ORDER BY p.data_reserva DESC`,
 			[req.user!.id],
 		);
 		res.json(result.rows);
+		esperar = false;
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: 'Erro ao buscar pedidos.' });
@@ -82,22 +157,33 @@ app.get('/api/health', (req, res) => {
 	});
 });
 
+//buscar endereço
 app.get('/api/users/:id/address', authenticate, async (req: AuthRequest, res) => {
 	try {
-		const result = await pool.query(
-			'SELECT CEP, logradouro, numero_casa, complemento FROM usuarios WHERE id_usuario = $1',
-			[req.params.id],
-		);
-		if (result.rows.length === 0) {
+
+		const evento = await axios.post("http://localhost:10000/eventos", {
+			tipo: "GetEndereco",
+			dados : req.params.id
+		});
+
+		if (auxEndereco == null) {
 			return res.status(404).json({ message: 'Usuário não encontrado.' });
 		}
-		const r = result.rows[0];
+
+		const r = auxEndereco;
 		res.json({
 			cep: r.cep,
 			rua: r.logradouro,
 			numero: r.numero_casa,
 			complemento: r.complemento,
 		});
+
+		//reseta o objeto auxiiar
+		auxEndereco.cep = null;
+		auxEndereco.complemento = null;
+		auxEndereco.logradouro = null;
+		auxEndereco.numero_casa = null;
+
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: 'Erro ao buscar endereço.' });
@@ -113,19 +199,13 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 
 	try {
 		if (address) {
-			await pool.query(
-				`UPDATE usuarios SET CEP = $1, logradouro = $2, numero_casa = $3, complemento = $4
-				 WHERE id_usuario = $5`,
-				[
-					address.cep ?? null,
-					address.rua ?? null,
-					address.numero ?? null,
-					address.complemento ?? null,
-					req.user!.id,
-				],
-			);
+		const evento = await axios.post("http://localhost:10000/eventos", {
+			tipo: "SetEndereco",
+			dados : [address, req.user!.id]
+		});
 		}
 
+		//novo pedido
 		const pedidoResult = await pool.query(
 			`INSERT INTO pedidos (id_usuario, data_reserva, valor_total, estado, id_caixa)
 			 VALUES ($1, NOW(), $2, 'pago', $3)

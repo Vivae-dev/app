@@ -21,5 +21,6 @@ router.delete(
 	requireAdmin,
 	CaixasController.delete,
 );
+router.post("/eventos", CaixasController.evento);
 
 export default router;
