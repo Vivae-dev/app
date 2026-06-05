@@ -47,13 +47,4 @@ export const reservasService = {
 
     return res.data;
   },
-  
-  async cancelReserva(id: number, token: string) {
-    const res = await axios.delete(`${reservaUrl}/api/reservas/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return res.data;
-  },
 };

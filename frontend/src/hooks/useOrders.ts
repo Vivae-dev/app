@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { reservasService } from "../services/reservasService";
+import { cancelamentoService } from "../services/cancelamentoService";
 
 export interface Order {
   id_pedido: number;
@@ -32,7 +33,7 @@ export function useOrders() {
 
   const cancelOrder = async (id: number, token: string) => {
     try {
-      await reservasService.cancelReserva(id, token);
+      await cancelamentoService.cancelReserva(id, token);
 
       setOrders((prevOrders) => prevOrders.filter((order) => order.id_pedido !== id));
       
