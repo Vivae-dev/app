@@ -21,9 +21,5 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
     "ts-node-dev": "^2.0.0"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6"
   }
 }
