@@ -1,0 +1,43 @@
+services:
+  catalogo:
+    build: ./listagem_produtos
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+    ports:
+      - "8001:8001"
+
+  auth:
+    build: ./autenticacao
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+    ports:
+      - "8002:8002"
+
+  carrinho:
+    build: ./carrinho
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+    ports:
+      - "8003:8003"
+
+  pagamento:
+    build: ./pagamento
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+    ports:
+      - "8004:8004"
+
+  barramento:
+    build: ./barramento
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+      CATALOGO_URL: http://catalogo:8001
+      AUTH_URL: http://auth:8002
+      RESERVA_URL: http://carrinho:8003
+    ports:
+      - "9000:9000"

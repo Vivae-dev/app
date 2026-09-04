@@ -66,6 +66,21 @@ npm run dev     # sobe todos os serviços simultaneamente
 
 Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
+## Docker
+
+Cada microsserviço tem seu próprio `Dockerfile`; `docker-compose.yml` orquestra os cinco.
+
+```bash
+cd backend
+docker compose up --build
+```
+
+Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004) e `barramento` (9000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso.
+
+```bash
+docker compose down   # para e remove os containers
+```
+
 ---
 
 ## Rotas da API
