@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const cancelamentoUrl = import.meta.env.VITE_CANCELAMENTO_URI || "http://localhost:8005";
+const reservaUrl = import.meta.env.VITE_RESERVA_URI || "http://localhost:8003";
 
 export const cancelamentoService = {
   async cancelReserva(id: number, token: string) {
-    const res = await axios.delete(`${cancelamentoUrl}/api/cancelamento/${id}`, {
+    const res = await axios.delete(`${reservaUrl}/api/reservas/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
