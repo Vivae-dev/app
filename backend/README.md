@@ -4,12 +4,40 @@ Microsserviços Express + TypeScript sob Domain-Driven Design.
 
 ## Estrutura de Microsserviços
 
-| Serviço       | Diretório           | Porta |
-| ------------- | ------------------- | ----- |
-| Autenticação  | `autenticacao/`     | 8002  |
-| Catálogo      | `listagem_produtos/`| 8001  |
-| Carrinho      | `carrinho/`         | 8003  |
-| Pagamento     | `pagamento/`        | 8004  |
+| Serviço             | Diretório            | Porta | Responsabilidade                               |
+| ------------------- | -------------------- | ----- | ---------------------------------------------- |
+| Catálogo (produtos) | `listagem_produtos/` | 8001  | CRUD de caixas (tabela `caixas`)               |
+| Autenticação        | `autenticacao/`      | 8002  | Cadastro, login e endereço (tabela `usuarios`) |
+| Carrinho (pedidos)  | `carrinho/`          | 8003  | CRUD de pedidos (tabela `pedidos`)             |
+| Pagamento           | `pagamento/`         | 8004  | Processamento de pagamento (mock)              |
+| Assinatura          | `assinatura/`        | 8005  | Assinaturas                                    |
+| Barramento          | `barramento/`        | 10000 | Barramento de eventos entre os serviços        |
+
+Cada tabela pertence a um único microsserviço, que concentra todo o seu CRUD. Quando um serviço precisa de dados de outro, a comunicação passa pelo barramento de eventos.
+
+## Barramento de Eventos — `http://localhost:10000`
+
+Os serviços publicam eventos em `POST /eventos`, e o barramento repassa cada evento para o endpoint de eventos dos serviços:
+
+| Destino      | Endpoint                                 |
+| ------------ | ---------------------------------------- |
+| Catálogo     | `http://localhost:8001/api/eventos`      |
+| Autenticação | `http://localhost:8002/api/auth/eventos` |
+| Carrinho     | `http://localhost:8003/api/eventos`      |
+
+**Formato do evento**
+
+```json
+{ "tipo": "NomeDoEvento", "dados": "..." }
+```
+
+| Evento                | Publicado por | Tratado por  | Descrição                                       |
+| --------------------- | ------------- | ------------ | ----------------------------------------------- |
+| `GetPedidos`          | Carrinho      | Catálogo     | Pede nome/imagem das caixas dos pedidos         |
+| `RespostaCaixa`       | Catálogo      | Carrinho     | Devolve as caixas (salvas em `caixas_cache`)    |
+| `GetEndereco`         | Carrinho      | Autenticação | Pede o endereço salvo do usuário                |
+| `RespostaGetEndereco` | Autenticação  | Carrinho     | Devolve o endereço do usuário                   |
+| `SetEndereco`         | Carrinho      | Autenticação | Atualiza o endereço do usuário ao criar reserva |
 
 ## Configuração de Ambiente
 
@@ -20,13 +48,14 @@ Cada serviço carrega dois arquivos `.env` em ordem de prioridade:
 
 ### Estrutura dos `.env`
 
-| Arquivo                       | Conteúdo                          |
-| ----------------------------- | --------------------------------- |
-| `backend/.env`                | DB, JWT_SECRET, SMTP, FRONT_URL   |
-| `autenticacao/.env`           | `AUTH_PORT=8002`                  |
-| `listagem_produtos/.env`      | `CATALOG_PORT=8001`               |
-| `carrinho/.env`               | `RESERVA_PORT=8003`               |
-| `pagamento/.env`              | `PAGAMENTO_PORT=8004`             |
+| Arquivo                  | Conteúdo                        |
+| ------------------------ | ------------------------------- |
+| `backend/.env`           | DB, JWT_SECRET, SMTP, FRONT_URL |
+| `autenticacao/.env`      | `AUTH_PORT=8002`                |
+| `listagem_produtos/.env` | `CATALOG_PORT=8001`             |
+| `carrinho/.env`          | `RESERVA_PORT=8003`             |
+| `pagamento/.env`         | `PAGAMENTO_PORT=8004`           |
+| `assinatura/.env`        | `CANCELAMENTO_PORT=8005`        |
 
 ### Primeiro uso
 
@@ -74,7 +103,7 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
 | Método | Rota                         | Auth | Descrição                                      |
 | ------ | ---------------------------- | ---- | ---------------------------------------------- |
-| `GET`  | `/api/health`                | —    | Status do serviço                              |
+| `GET`  | `/api/auth/health`           | —    | Status do serviço                              |
 | `POST` | `/api/auth/register`         | —    | Cadastra usuário e envia e-mail de confirmação |
 | `POST` | `/api/auth/login`            | —    | Login; retorna JWT (conta deve estar ativa)    |
 | `GET`  | `/api/auth/confirmar/:token` | —    | Ativa conta pelo token recebido por e-mail     |
@@ -127,14 +156,19 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
 ---
 
-### Carrinho/Reservas — `http://localhost:8003`
+### Carrinho/Pedidos — `http://localhost:8003`
 
-| Método | Rota                      | Auth | Descrição                         |
-| ------ | ------------------------- | ---- | --------------------------------- |
-| `GET`  | `/api/health`             | —    | Status do serviço                 |
-| `GET`  | `/api/reservas`           | JWT  | Lista pedidos do usuário logado   |
-| `POST` | `/api/reservas`           | JWT  | Cria reserva                      |
-| `GET`  | `/api/users/:id/address`  | JWT  | Retorna endereço salvo do usuário |
+Concentra todo o CRUD da tabela `pedidos` (criar, listar e cancelar).
+
+| Método   | Rota                     | Auth | Descrição                                    |
+| -------- | ------------------------ | ---- | -------------------------------------------- |
+| `GET`    | `/api/health`            | —    | Status do serviço                            |
+| `GET`    | `/api/reservas`          | JWT  | Lista pedidos do usuário logado              |
+| `POST`   | `/api/reservas`          | JWT  | Cria reserva                                 |
+| `DELETE` | `/api/reservas/:id`      | JWT  | Cancela (remove) um pedido do usuário logado |
+| `GET`    | `/api/users/:id/address` | JWT  | Retorna endereço salvo do usuário            |
+
+`DELETE /api/reservas/:id` retorna `404` se o pedido não existir ou não pertencer ao usuário.
 
 **Body — `POST /api/reservas`**
 
@@ -160,7 +194,10 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
     "id_pedido": 1,
     "data_reserva": "2025-05-25T00:00:00.000Z",
     "valor_total": 149.9,
-    "estado": "pago"
+    "estado": "pago",
+    "id_caixa": 3,
+    "nome_experiencia": "string",
+    "imagem": "string"
   }
 ]
 ```
@@ -169,10 +206,10 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
 ### Pagamento (mock) — `http://localhost:8004`
 
-| Método | Rota            | Auth | Descrição                         |
-| ------ | --------------- | ---- | --------------------------------- |
-| `GET`  | `/api/health`   | —    | Status do serviço                 |
-| `POST` | `/api/pagamento`| —    | Processa pagamento (sempre aprova)|
+| Método | Rota             | Auth | Descrição                          |
+| ------ | ---------------- | ---- | ---------------------------------- |
+| `GET`  | `/api/health`    | —    | Status do serviço                  |
+| `POST` | `/api/pagamento` | —    | Processa pagamento (sempre aprova) |
 
 **Body — `POST /api/pagamento`**
 
@@ -197,3 +234,13 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
   "message": "Pagamento aprovado."
 }
 ```
+
+---
+
+### Assinatura — `http://localhost:8005`
+
+| Método | Rota          | Auth | Descrição         |
+| ------ | ------------- | ---- | ----------------- |
+| `GET`  | `/api/health` | —    | Status do serviço |
+
+> O cancelamento de pedidos, que antes ficava aqui (`DELETE /api/cancelamento/:id`), foi movido para o serviço de Carrinho/Pedidos (`DELETE /api/reservas/:id`), para que o CRUD de `pedidos` fique inteiro em um único microsserviço.

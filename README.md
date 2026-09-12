@@ -38,13 +38,15 @@ Disponível em [http://localhost:8000](http://localhost:8000)
 
 ## Portas dos Microsserviços
 
-| Serviço              | Porta |
-| -------------------- | ----- |
-| Frontend             | 8000  |
-| Catálogo de Produtos | 8001  |
-| Autenticação         | 8002  |
-| Carrinho/Reservas    | 8003  |
-| Pagamento (mock)     | 8004  |
+| Serviço               | Porta |
+| --------------------- | ----- |
+| Frontend              | 8000  |
+| Catálogo de Produtos  | 8001  |
+| Autenticação          | 8002  |
+| Carrinho/Pedidos      | 8003  |
+| Pagamento (mock)      | 8004  |
+| Assinatura            | 8005  |
+| Barramento de Eventos | 10000 |
 
 ---
 
