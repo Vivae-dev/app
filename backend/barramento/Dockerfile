@@ -7,6 +7,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 9000
+EXPOSE 10000
 
 CMD ["npm", "run", "dev"]

@@ -75,10 +75,41 @@ cd backend
 docker compose up --build
 ```
 
-Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004) e `barramento` (9000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso.
+Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004) e `barramento` (10000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso.
 
 ```bash
 docker compose down   # para e remove os containers
+```
+
+## Kubernetes
+
+Manifests em `k8s/` — um Deployment + Service (ClusterIP) por microsserviço, imagens iguais às do `docker compose build` (`backend-catalogo`, `backend-auth`, etc.), `imagePullPolicy: IfNotPresent` (usa a imagem já buildada localmente, sem precisar de registry).
+
+```bash
+cd backend
+docker compose build          # gera as imagens que os manifests referenciam
+
+cp k8s/secret.example.yaml k8s/secret.yaml
+kubectl create secret generic backend-env --from-env-file=.env --dry-run=client -o yaml > k8s/secret.yaml
+# (ou edite k8s/secret.yaml manualmente com os valores do backend/.env)
+
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/barramento.yaml
+```
+
+Serviços se enxergam pelo nome do Service no cluster (`http://catalogo:8001`, etc.) — mesma lógica do `barramento` no Docker Compose, via `CATALOGO_URL`/`AUTH_URL`/`RESERVA_URL`.
+
+Pra acessar de fora do cluster (browser, frontend local):
+
+```bash
+kubectl port-forward svc/catalogo 8001:8001
+kubectl port-forward svc/auth 8002:8002
+kubectl port-forward svc/carrinho 8003:8003
+kubectl port-forward svc/pagamento 8004:8004
+```
+
+```bash
+kubectl delete -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/barramento.yaml -f k8s/secret.yaml
 ```
 
 ---

@@ -40,4 +40,4 @@ services:
       AUTH_URL: http://auth:8002
       RESERVA_URL: http://carrinho:8003
     ports:
-      - "9000:9000"
+      - "10000:10000"
