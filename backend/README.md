@@ -1,6 +1,6 @@
 # Vivae - Backend (Monorepo de Microsserviços)
 
-Microsserviços Express + TypeScript sob Domain-Driven Design.
+Microsserviços Express + TypeScript sob Domain-Driven Design, mais o serviço de cancelamento (`assinatura/`) em Dart + shelf.
 
 ## Estrutura de Microsserviços
 
@@ -10,6 +10,8 @@ Microsserviços Express + TypeScript sob Domain-Driven Design.
 | Catálogo      | `listagem_produtos/`| 8001  |
 | Carrinho      | `carrinho/`         | 8003  |
 | Pagamento     | `pagamento/`        | 8004  |
+| Cancelamento (Dart) | `assinatura/` | 8005  |
+| Barramento    | `barramento/`       | 10000 |
 
 ## Configuração de Ambiente
 
@@ -68,14 +70,14 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
 ## Docker
 
-Cada microsserviço tem seu próprio `Dockerfile`; `docker-compose.yml` orquestra os cinco.
+Cada microsserviço tem seu próprio `Dockerfile`; `docker-compose.yml` orquestra os seis.
 
 ```bash
 cd backend
 docker compose up --build
 ```
 
-Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004) e `barramento` (10000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso.
+Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004), `assinatura` (8005, Dart) e `barramento` (10000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso, e o `assinatura` usa `BARRAMENTO_URL`.
 
 ```bash
 docker compose down   # para e remove os containers
@@ -94,7 +96,7 @@ kubectl create secret generic backend-env --from-env-file=.env --dry-run=client 
 # (ou edite k8s/secret.yaml manualmente com os valores do backend/.env)
 
 kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/barramento.yaml
+kubectl apply -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/assinatura.yaml -f k8s/barramento.yaml
 ```
 
 Serviços se enxergam pelo nome do Service no cluster (`http://catalogo:8001`, etc.) — mesma lógica do `barramento` no Docker Compose, via `CATALOGO_URL`/`AUTH_URL`/`RESERVA_URL`.
@@ -106,10 +108,11 @@ kubectl port-forward svc/catalogo 8001:8001
 kubectl port-forward svc/auth 8002:8002
 kubectl port-forward svc/carrinho 8003:8003
 kubectl port-forward svc/pagamento 8004:8004
+kubectl port-forward svc/assinatura 8005:8005
 ```
 
 ```bash
-kubectl delete -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/barramento.yaml -f k8s/secret.yaml
+kubectl delete -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/assinatura.yaml -f k8s/barramento.yaml -f k8s/secret.yaml
 ```
 
 ---
@@ -243,3 +246,24 @@ kubectl delete -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s
   "message": "Pagamento aprovado."
 }
 ```
+
+---
+
+### Cancelamento (Dart) — `http://localhost:8005`
+
+Serviço em Dart (`shelf` + `shelf_router`, `postgres`, `dart_jsonwebtoken`). Valida o JWT, confere no banco se o pedido é do usuário e publica o evento `CancelarPedido` (`dados: [id_pedido, id_usuario]`) no barramento. Quem apaga o pedido é o `carrinho`, ao receber o evento.
+
+| Método   | Rota                    | Auth | Descrição                    |
+| -------- | ----------------------- | ---- | ---------------------------- |
+| `DELETE` | `/api/cancelamento/:id` | JWT  | Cancela um pedido do usuário |
+
+Respostas: `200` cancelado, `400` id inválido, `401` sem token/token inválido, `404` pedido não existe ou é de outro usuário, `500` erro no banco/barramento.
+
+```bash
+cd assinatura
+dart pub get
+dart run bin/assinatura.dart   # ou: npm run dev na pasta backend
+dart test
+```
+
+Variáveis: `CANCELAMENTO_PORT` (padrão 8005), `BARRAMENTO_URL` (padrão `http://localhost:10000`), mais `DB_*`, `JWT_SECRET` e `FRONT_URL` do `backend/.env`.

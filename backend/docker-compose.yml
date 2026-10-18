@@ -31,6 +31,15 @@ services:
     ports:
       - "8004:8004"
 
+  assinatura:
+    build: ./assinatura
+    env_file: ./.env
+    environment:
+      HOST: 0.0.0.0
+      BARRAMENTO_URL: http://barramento:10000
+    ports:
+      - "8005:8005"
+
   barramento:
     build: ./barramento
     env_file: ./.env

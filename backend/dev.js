@@ -6,17 +6,17 @@ const services = [
   { name: 'catalogo', dir: 'listagem_produtos'  },
   { name: 'carrinho', dir: 'carrinho'           },
   { name: 'pagamento', dir: 'pagamento' },
-  { name: 'cancelar',   dir: 'assinatura'},
+  { name: 'cancelar',   dir: 'assinatura', cmd: 'dart', args: ['run', 'bin/assinatura.dart'] },
   { name: 'barramento', dir: 'barramento'},
 ];
 
 const colors = ['\x1b[34m', '\x1b[32m', '\x1b[33m',  '\x1b[35m', '\x1b[31m', '\x1b[38;5;208m'];
 const reset = '\x1b[0m';
 
-services.forEach(({ name, dir }, i) => {
+services.forEach(({ name, dir, cmd = 'npm', args = ['run', 'dev'] }, i) => {
 	const color = colors[i];
 	const cwd = path.join(__dirname, dir);
-	const proc = spawn('npm', ['run', 'dev'], { cwd, shell: true });
+	const proc = spawn(cmd, args, { cwd, shell: true });
 
 	const prefix = `${color}[${name}]${reset} `;
 	const sanitize = (l) => {

@@ -19,9 +19,13 @@ app.use(bodyParser.json());
 
 app.post('/eventos', (req, res) => {
     const evento = req.body;
-    axios.post(`${CATALOGO_URL}/api/eventos`, evento);
-    axios.post(`${AUTH_URL}/api/auth/eventos`, evento);
-    axios.post(`${RESERVA_URL}/api/eventos`, evento);
+    // Sem catch, um serviço fora do ar gera unhandledRejection e derruba o barramento
+    const repassar = (url: string) =>
+        axios.post(url, evento).catch((err) =>
+            console.error(`Falha ao repassar ${evento?.tipo} para ${url}: ${err.message}`));
+    repassar(`${CATALOGO_URL}/api/eventos`);
+    repassar(`${AUTH_URL}/api/auth/eventos`);
+    repassar(`${RESERVA_URL}/api/eventos`);
    res.status(200).send({ msg: "ok" });
 });
 
