@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pagamento
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pagamento
+  template:
+    metadata:
+      labels:
+        app: pagamento
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: pagamento
+          image: backend-pagamento
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8004
+          envFrom:
+            - secretRef:
+                name: backend-env
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pagamento
+spec:
+  selector:
+    app: pagamento
+  ports:
+    - port: 8004
+      targetPort: 8004

@@ -27,6 +27,10 @@ services.forEach((dir) => {
 	execSync('npm install', { cwd: path.join(__dirname, dir), stdio: 'inherit' });
 });
 
+// assinatura é Dart
+console.log('\n[setup] Instalando assinatura (dart pub get)...');
+execSync('dart pub get', { cwd: path.join(__dirname, 'assinatura'), stdio: 'inherit' });
+
 console.log(
 	'\n[setup] Finalizado. Edite backend/.env com suas credenciais e rode: npm run dev\n',
 );

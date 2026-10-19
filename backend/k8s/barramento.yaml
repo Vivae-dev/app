@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: barramento
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: barramento
+  template:
+    metadata:
+      labels:
+        app: barramento
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: barramento
+          image: backend-barramento
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 10000
+          envFrom:
+            - secretRef:
+                name: backend-env
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: CATALOGO_URL
+              value: http://catalogo:8001
+            - name: AUTH_URL
+              value: http://auth:8002
+            - name: RESERVA_URL
+              value: http://carrinho:8003
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: barramento
+spec:
+  selector:
+    app: barramento
+  ports:
+    - port: 10000
+      targetPort: 10000
