@@ -13,7 +13,8 @@ const host = process.env.HOST || 'localhost';
 
 app.use(
 	cors({
-		origin: process.env.FRONT_URL || 'http://localhost:8000',
+		// FRONT_URL aceita várias origens separadas por vírgula (React e Flutter Web)
+		origin: (process.env.FRONT_URL || 'http://localhost:8000').split(',').map((o) => o.trim()),
 	}),
 );
 app.use(express.json());

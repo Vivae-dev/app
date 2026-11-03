@@ -24,7 +24,7 @@ Cada serviço carrega dois arquivos `.env` em ordem de prioridade:
 
 | Arquivo                       | Conteúdo                          |
 | ----------------------------- | --------------------------------- |
-| `backend/.env`                | DB, JWT_SECRET, SMTP, FRONT_URL   |
+| `backend/.env`                | DB, JWT_SECRET, SMTP, FRONT_URL (origens liberadas no CORS, separadas por vírgula: React 8000 e Flutter 8100) |
 | `autenticacao/.env`           | `AUTH_PORT=8002`                  |
 | `listagem_produtos/.env`      | `CATALOG_PORT=8001`               |
 | `carrinho/.env`               | `RESERVA_PORT=8003`               |
