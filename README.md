@@ -11,7 +11,7 @@
 
 Serviço que vende experiências em caixas de assinatura e avulsas.
 
-Arquitetura: backend Express (TypeScript) em microsserviços + frontend React (Vite).
+Arquitetura: backend Express (TypeScript) em microsserviços + frontend React (Vite) + interface Flutter Web (`flutter_app/`).
 
 ## Como Rodar
 
@@ -34,13 +34,27 @@ npm run dev
 
 Disponível em [http://localhost:8000](http://localhost:8000)
 
+### Interface Flutter Web (opcional)
+
+Precisa do Flutter 3.29+ e de `FRONT_URL=http://localhost:8000,http://localhost:8100` no `backend/.env`.
+
+```bash
+cd flutter_app
+flutter create --platforms=web .   # só na 1ª vez
+flutter pub get
+flutter run -d chrome --web-port 8100
+```
+
+Detalhes em [`flutter_app/README.md`](flutter_app/README.md).
+
 ---
 
 ## Portas dos Microsserviços
 
 | Serviço              | Porta |
 | -------------------- | ----- |
-| Frontend             | 8000  |
+| Frontend (React)     | 8000  |
+| Flutter Web          | 8100  |
 | Catálogo de Produtos | 8001  |
 | Autenticação         | 8002  |
 | Carrinho/Reservas    | 8003  |

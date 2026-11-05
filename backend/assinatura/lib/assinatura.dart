@@ -58,13 +58,20 @@ Response _json(int status, Map<String, Object?> body) => Response(
   headers: {'Content-Type': 'application/json; charset=utf-8'},
 );
 
+/// [origin] aceita várias origens separadas por vírgula (React e Flutter Web).
+/// Responde com a origem de quem pediu, se ela estiver na lista.
 Middleware cors(String origin) {
-  final headers = {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
+  final permitidas = origin.split(',').map((o) => o.trim()).toList();
   return (inner) => (req) async {
+    final pedida = req.headers['origin'];
+    final headers = {
+      'Access-Control-Allow-Origin': permitidas.contains(pedida)
+          ? pedida!
+          : permitidas.first,
+      'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Vary': 'Origin',
+    };
     if (req.method == 'OPTIONS') return Response(204, headers: headers);
     final res = await inner(req);
     return res.change(headers: headers);

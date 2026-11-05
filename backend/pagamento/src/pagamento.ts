@@ -10,7 +10,8 @@ const app = express();
 const port = parseInt(process.env.PAGAMENTO_PORT || '8004', 10);
 const host = process.env.HOST || 'localhost';
 
-app.use(cors({ origin: process.env.FRONT_URL || 'http://localhost:8000' }));
+// FRONT_URL aceita várias origens separadas por vírgula (React e Flutter Web)
+app.use(cors({ origin: (process.env.FRONT_URL || 'http://localhost:8000').split(',').map((o) => o.trim()) }));
 app.use(express.json());
 
 function generateTransactionId(): string {
