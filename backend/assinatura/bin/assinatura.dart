@@ -8,7 +8,7 @@ import 'package:shelf/shelf_io.dart' as io;
 Future<void> main() async {
   // Mesma ordem dos serviços Node: .env local e depois backend/.env.
   final env = DotEnv(includePlatformEnvironment: true)
-    ..load(['.env', '../.env'].where((f) => File(f).existsSync()));
+    ..load(['../.env', '.env'].where((f) => File(f).existsSync()));
 
   final port = int.parse(env['CANCELAMENTO_PORT'] ?? '8005');
   final host = env['HOST'] ?? 'localhost';
