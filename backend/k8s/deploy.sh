@@ -6,6 +6,8 @@
 # Acesso depois do deploy: http://localhost (React) e http://localhost/flutter/ (Flutter Web).
 set -euo pipefail
 
+export MSYS_NO_PATHCONV=1 
+
 cd "$(dirname "$0")/.."   # pasta backend/
 
 if [ ! -f .env ]; then
