@@ -147,7 +147,7 @@ export const CaixasController = {
 		try{
 			const tipo = req.body.tipo as keyof typeof funcoesDoBarramento;
 			await funcoesDoBarramento[tipo](req.body.dados);
-			await axios.post("http://localhost:10000/eventos", {
+			await axios.post(`${process.env.BARRAMENTO_URL || 'http://localhost:10000'}/eventos`, {
 				tipo: "RespostaCaixa",
 				dados : caixas
 			});

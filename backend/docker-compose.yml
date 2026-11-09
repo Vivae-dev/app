@@ -1,9 +1,17 @@
+# Sobe toda a solução: 6 microsserviços + React (8000) + Flutter Web (8100).
+# Uso: cd backend && docker compose up --build
+#
+# Todos os serviços leem backend/.env (env_file). Como cada serviço usa um banco
+# diferente, o DB_NAME é definido por serviço em `environment`, que tem
+# prioridade sobre o env_file.
 services:
   catalogo:
     build: ./listagem_produtos
     env_file: ./.env
     environment:
       HOST: 0.0.0.0
+      DB_NAME: listagem_produtos
+      BARRAMENTO_URL: http://barramento:10000
     ports:
       - "8001:8001"
 
@@ -12,6 +20,7 @@ services:
     env_file: ./.env
     environment:
       HOST: 0.0.0.0
+      BARRAMENTO_URL: http://barramento:10000
     ports:
       - "8002:8002"
 
@@ -20,6 +29,8 @@ services:
     env_file: ./.env
     environment:
       HOST: 0.0.0.0
+      DB_NAME: carrinho
+      BARRAMENTO_URL: http://barramento:10000
     ports:
       - "8003:8003"
 
@@ -36,6 +47,7 @@ services:
     env_file: ./.env
     environment:
       HOST: 0.0.0.0
+      DB_NAME: carrinho
       BARRAMENTO_URL: http://barramento:10000
     ports:
       - "8005:8005"
@@ -50,3 +62,15 @@ services:
       RESERVA_URL: http://carrinho:8003
     ports:
       - "10000:10000"
+
+  # O navegador chama os serviços direto, pelas portas publicadas acima
+  # (os endereços http://localhost:800X já são o padrão das duas interfaces).
+  frontend:
+    build: ../frontend
+    ports:
+      - "8000:80"
+
+  flutter:
+    build: ../flutter_app
+    ports:
+      - "8100:80"

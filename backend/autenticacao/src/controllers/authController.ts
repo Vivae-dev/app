@@ -21,7 +21,7 @@ const funcoesDoBarramento = {
 			'SELECT CEP, logradouro, numero_casa, complemento FROM usuarios WHERE id_usuario = $1',
 			[idUser],
 		);
-		await axios.post("http://localhost:10000/eventos", {
+		await axios.post(`${process.env.BARRAMENTO_URL || 'http://localhost:10000'}/eventos`, {
 				tipo: "RespostaGetEndereco",
 				dados : result.rows[0]
 			});
