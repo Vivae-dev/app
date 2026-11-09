@@ -1273,10 +1273,6 @@ function App() {
 
   // Helpers
 
-  const authHeaders = () => ({
-    headers: { Authorization: `Bearer ${currentUser?.token}` },
-  });
-
   const handleExpiredSession = () => {
     logout();
     setCurrentView("catalog");

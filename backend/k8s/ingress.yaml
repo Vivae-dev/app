@@ -1,0 +1,72 @@
+# Porta de entrada única (http://localhost): o navegador fala só com o Ingress,
+# que repassa cada caminho ao serviço certo. Como o frontend e a API ficam na
+# mesma origem, não há problema de CORS.
+#
+# Requer um Ingress Controller NGINX:
+#   Minikube:       minikube addons enable ingress   (e, em outro terminal, minikube tunnel)
+#   Docker Desktop: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vivae
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth
+                port:
+                  number: 8002
+          - path: /api/caixas
+            pathType: Prefix
+            backend:
+              service:
+                name: catalogo
+                port:
+                  number: 8001
+          - path: /api/reservas
+            pathType: Prefix
+            backend:
+              service:
+                name: carrinho
+                port:
+                  number: 8003
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: carrinho
+                port:
+                  number: 8003
+          - path: /api/pagamento
+            pathType: Prefix
+            backend:
+              service:
+                name: pagamento
+                port:
+                  number: 8004
+          - path: /api/cancelamento
+            pathType: Prefix
+            backend:
+              service:
+                name: assinatura
+                port:
+                  number: 8005
+          - path: /flutter
+            pathType: Prefix
+            backend:
+              service:
+                name: flutter
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

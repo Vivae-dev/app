@@ -70,50 +70,59 @@ Hospedado no Aiven (PostgreSQL). Schema em `../database/create-tables.sql`.
 
 ## Docker
 
-Cada microsserviço tem seu próprio `Dockerfile`; `docker-compose.yml` orquestra os seis.
+Cada microsserviço tem seu próprio `Dockerfile`, e o React (`../frontend`) e o Flutter Web (`../flutter_app`) também. O `docker-compose.yml` sobe tudo:
 
 ```bash
 cd backend
 docker compose up --build
 ```
 
-Sobe `catalogo` (8001), `auth` (8002), `carrinho` (8003), `pagamento` (8004), `assinatura` (8005, Dart) e `barramento` (10000), todos lendo credenciais de `backend/.env` (`env_file`). Dentro do compose, os serviços se enxergam pelo nome (`http://catalogo:8001`, etc.) em vez de `localhost` — o `barramento` usa as vars `CATALOGO_URL`, `AUTH_URL` e `RESERVA_URL` pra isso, e o `assinatura` usa `BARRAMENTO_URL`.
+| Serviço | Endereço |
+| ------- | -------- |
+| React | http://localhost:8000 |
+| Flutter Web | http://localhost:8100 |
+| Catálogo, Auth, Carrinho, Pagamento, Cancelamento | http://localhost:8001 a 8005 |
+| Barramento | http://localhost:10000 |
+
+Os serviços leem as credenciais de `backend/.env` (`env_file`). Como cada um usa um banco diferente, o `DB_NAME` é definido por serviço no compose (`carrinho` e `assinatura` usam `carrinho`; `catalogo` usa `listagem_produtos`; os demais usam o do `.env`). Dentro do compose os serviços se enxergam pelo nome (`http://barramento:10000`, `http://catalogo:8001`...), por isso o endereço do barramento é lido da variável `BARRAMENTO_URL`, e não de `localhost`.
 
 ```bash
-docker compose down   # para e remove os containers
+docker compose down   # para e remove os contêineres
 ```
 
 ## Kubernetes
 
-Manifests em `k8s/` — um Deployment + Service (ClusterIP) por microsserviço, imagens iguais às do `docker compose build` (`backend-catalogo`, `backend-auth`, etc.), `imagePullPolicy: IfNotPresent` (usa a imagem já buildada localmente, sem precisar de registry).
+Manifestos em `k8s/`: um Deployment + Service por microsserviço, mais `frontend.yaml`, `flutter.yaml` e o `ingress.yaml`, que expõe tudo em **http://localhost** (React em `/`, Flutter Web em `/flutter/`, e a API em `/api/...`). Como interface e API ficam na mesma origem, não há CORS.
+
+| Caminho no Ingress | Serviço |
+| ------------------ | ------- |
+| `/api/auth` | auth (8002) |
+| `/api/caixas` | catalogo (8001) |
+| `/api/reservas`, `/api/users` | carrinho (8003) |
+| `/api/pagamento` | pagamento (8004) |
+| `/api/cancelamento` | assinatura (8005) |
+| `/flutter` | Flutter Web |
+| `/` | React |
+
+Pré-requisitos: `docker`, `kubectl` e um cluster local ativo (Minikube, kind ou Docker Desktop com Kubernetes), com um Ingress Controller NGINX (veja o cabeçalho de `k8s/ingress.yaml`).
 
 ```bash
 cd backend
-docker compose build          # gera as imagens que os manifests referenciam
-
-cp k8s/secret.example.yaml k8s/secret.yaml
-kubectl create secret generic backend-env --from-env-file=.env --dry-run=client -o yaml > k8s/secret.yaml
-# (ou edite k8s/secret.yaml manualmente com os valores do backend/.env)
-
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/assinatura.yaml -f k8s/barramento.yaml
+cp .env.example .env     # preencha DB_*, JWT_SECRET e SMTP (só na primeira vez)
+bash k8s/deploy.sh
 ```
 
-Serviços se enxergam pelo nome do Service no cluster (`http://catalogo:8001`, etc.) — mesma lógica do `barramento` no Docker Compose, via `CATALOGO_URL`/`AUTH_URL`/`RESERVA_URL`.
+O script constrói as imagens, carrega no Minikube/kind (se for o caso), cria o Secret `backend-env` a partir do `backend/.env` e aplica os manifestos. Depois: `kubectl get pods`.
 
-Pra acessar de fora do cluster (browser, frontend local):
+O `DB_NAME` por serviço e o `BARRAMENTO_URL` estão no `env` de cada Deployment, que tem prioridade sobre o Secret.
+
+Para remover tudo:
 
 ```bash
-kubectl port-forward svc/catalogo 8001:8001
-kubectl port-forward svc/auth 8002:8002
-kubectl port-forward svc/carrinho 8003:8003
-kubectl port-forward svc/pagamento 8004:8004
-kubectl port-forward svc/assinatura 8005:8005
+kubectl delete -f k8s/ --ignore-not-found   # inclui o Secret backend-env
 ```
 
-```bash
-kubectl delete -f k8s/catalogo.yaml -f k8s/auth.yaml -f k8s/carrinho.yaml -f k8s/pagamento.yaml -f k8s/assinatura.yaml -f k8s/barramento.yaml -f k8s/secret.yaml
-```
+As imagens usam `imagePullPolicy: IfNotPresent` (sem registry). Para publicar em um registry de nuvem, é preciso renomear as imagens com o endereço do registry e dar `docker push`.
 
 ---
 

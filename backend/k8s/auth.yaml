@@ -25,6 +25,10 @@ spec:
           env:
             - name: HOST
               value: "0.0.0.0"
+            - name: BARRAMENTO_URL
+              value: http://barramento:10000
+            - name: AUTH_BASE_URL
+              value: http://localhost
 ---
 apiVersion: v1
 kind: Service

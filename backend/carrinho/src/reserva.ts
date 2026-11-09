@@ -133,7 +133,7 @@ app.get('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 
 		const aux = await pool.query('SELECT id_caixa FROM pedidos WHERE id_usuario = $1 ORDER BY data_reserva DESC', [req.user!.id],);
 
-		await axios.post("http://localhost:10000/eventos", {
+		await axios.post(`${process.env.BARRAMENTO_URL || 'http://localhost:10000'}/eventos`, {
 			tipo: "GetPedidos",
 			dados : aux.rows
 		});
@@ -168,7 +168,7 @@ app.get('/api/health', (req, res) => {
 app.get('/api/users/:id/address', authenticate, async (req: AuthRequest, res) => {
 	try {
 
-		const evento = await axios.post("http://localhost:10000/eventos", {
+		const evento = await axios.post(`${process.env.BARRAMENTO_URL || 'http://localhost:10000'}/eventos`, {
 			tipo: "GetEndereco",
 			dados : req.params.id
 		});
@@ -206,7 +206,7 @@ app.post('/api/reservas', authenticate, async (req: AuthRequest, res) => {
 
 	try {
 		if (address) {
-		const evento = await axios.post("http://localhost:10000/eventos", {
+		const evento = await axios.post(`${process.env.BARRAMENTO_URL || 'http://localhost:10000'}/eventos`, {
 			tipo: "SetEndereco",
 			dados : [address, req.user!.id]
 		});
